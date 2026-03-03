@@ -303,7 +303,9 @@ def fetch_bills():
                 num_messages = len(mail.list()[1])
                 email_count = num_messages
                 
-                for i in range(min(num_messages, 50)):
+                print(f"📬 找到 {num_messages} 封邮件，开始读取...")
+                
+                for i in range(num_messages):
                     try:
                         resp, lines, octets = mail.retr(i + 1)
                         raw_email = b'\r\n'.join(lines)
@@ -312,6 +314,7 @@ def fetch_bills():
                         subject = decode_email_header(msg.get('Subject'))
                         
                         if '平安银行' in subject or '信用卡' in subject or '账单' in subject:
+                            print(f"📧 处理邮件 {i+1}/{num_messages}: {subject[:50]}")
                             for part in msg.walk():
                                 if part.get_content_maintype() == 'multipart':
                                     continue
@@ -366,7 +369,9 @@ def fetch_bills():
                 email_ids = search_data[0].split()
                 email_count = len(email_ids)
                 
-                for email_id in email_ids[-50:]:
+                print(f"📬 找到 {email_count} 封邮件，开始读取...")
+                
+                for email_id in email_ids:
                     try:
                         typ, msg_data = mail.fetch(email_id, '(RFC822)')
                         for response_part in msg_data:
@@ -376,6 +381,7 @@ def fetch_bills():
                                 subject = decode_email_header(msg.get('Subject'))
                                 
                                 if '平安银行' in subject or '信用卡' in subject or '账单' in subject:
+                                    print(f"📧 处理邮件: {subject[:50]}")
                                     for part in msg.walk():
                                         if part.get_content_maintype() == 'multipart':
                                             continue
