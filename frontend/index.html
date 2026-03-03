@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>平安银行账单分析 Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .config-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+            display: block;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            display: block;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+            display: block;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card canvas {
+            max-height: 300px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .bill-list {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .bill-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bill-item:last-child {
+            border-bottom: none;
+        }
+
+        .bill-info h3 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .bill-info p {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .bill-amount {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d32f2f;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 平安银行账单分析 Dashboard</h1>
+            
+            <div class="config-section">
+                <div class="form-group">
+                    <label>邮箱地址</label>
+                    <input type="email" id="email" placeholder="例: you@163.com" value="sdlyingyong@163.com">
+                </div>
+
+                <div class="form-group">
+                    <label>邮箱类型</label>
+                    <select id="emailType">
+                        <option value="163">163 邮箱</option>
+                        <option value="qq">QQ 邮箱</option>
+                        <option value="gmail">Gmail</option>
+                        <option value="aliyun">阿里云邮箱</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>邮箱密码/授权码</label>
+                    <input type="password" id="authCode" placeholder="输入邮箱密码或授权码">
+                </div>
+
+                <button id="fetchBtn" onclick="fetchBills()">开始读取</button>
+            </div>
+
+            <div id="status" class="status"></div>
+        </header>
+
+        <!-- 统计数据 -->
+        <div class="stats-grid" id="statsGrid" style="display: none;">
+            <div class="stat-box">
+                <div class="stat-label">总消费</div>
+                <div class="stat-value" id="totalAmount">¥0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">账单数量</div>
+                <div class="stat-value" id="billCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">平均单笔</div>
+                <div class="stat-value" id="avgAmount">¥0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">最大消费</div>
+                <div class="stat-value" id="maxAmount">¥0</div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="dashboard" id="dashboard" style="display: none;">
+            <div class="card">
+                <h2>📈 月度消费趋势</h2>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+
+            <div class="card">
+                <h2>🥧 消费类别分布</h2>
+                <canvas id="categoryChart"></canvas>
+            </div>
+
+            <div class="card">
+                <h2>📊 消费对比分析</h2>
+                <canvas id="comparisonChart"></canvas>
+            </div>
+
+            <div class="card">
+                <h2>🔥 消费热力图</h2>
+                <canvas id="heatmapChart"></canvas>
+            </div>
+
+            <div class="card">
+                <h2>📊 消费排行 Top 5</h2>
+                <canvas id="topChart"></canvas>
+            </div>
+
+            <div class="card">
+                <h2>📉 日消费分布</h2>
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 账单列表 -->
+        <div class="bill-list" id="billList" style="display: none;">
+            <h2 style="margin-bottom: 20px;">📋 账单明细</h2>
+            
+            <!-- 筛选和排序控件 -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">搜索商家</label>
+                    <input type="text" id="searchMerchant" placeholder="输入商家名称..." oninput="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">金额范围</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="number" id="minAmount" placeholder="最小" oninput="filterBills()" style="width: 50%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                        <input type="number" id="maxAmount" placeholder="最大" oninput="filterBills()" style="width: 50%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                    </div>
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">日期范围</label>
+                    <select id="dateFilter" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                        <option value="all">全部</option>
+                        <option value="today">今天</option>
+                        <option value="week">本周</option>
+                        <option value="month">本月</option>
+                        <option value="year">本年</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">分类筛选</label>
+                    <select id="categoryFilter" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                        <option value="all">全部分类</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">排序方式</label>
+                    <select id="sortOrder" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                        <option value="date-desc">日期降序</option>
+                        <option value="date-asc">日期升序</option>
+                        <option value="amount-desc">金额降序</option>
+                        <option value="amount-asc">金额升序</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">分组方式</label>
+                    <select id="groupBy" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                        <option value="none">不分组</option>
+                        <option value="date">按日期</option>
+                        <option value="month">按月份</option>
+                        <option value="year">按年份</option>
+                        <option value="category">按分类</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 统计信息 -->
+            <div id="filterStats" style="margin-bottom: 15px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; font-size: 14px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="statsText"></span>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="exportToExcel()" style="padding: 8px 16px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 14px;">📊 导出Excel</button>
+                    <button onclick="exportToPDF()" style="padding: 8px 16px; background: linear-gradient(135deg, #f093fb, #f5576c); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 14px;">📄 导出PDF</button>
+                </div>
+            </div>
+            
+            <div id="billItems"></div>
+        </div>
+
+        <!-- 空状态 -->
+        <div class="empty-state" id="emptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p>输入邮箱和密码/授权码，点击「开始读取」获取账单数据</p>
+        </div>
+    </div>
+
+    <script>
+        const IMAP_SERVERS = {
+            "163": "imap.163.com",
+            "qq": "imap.qq.com",
+            "gmail": "imap.gmail.com",
+            "aliyun": "imap.aliyun.com"
+        };
+
+        let charts = {};
+        let billData = [];
+
+        async function fetchBills() {
+            const email = document.getElementById("email").value;
+            const emailType = document.getElementById("emailType").value;
+            const authCode = document.getElementById("authCode").value;
+            const statusEl = document.getElementById("status");
+            const fetchBtn = document.getElementById("fetchBtn");
+
+            if (!email || !authCode) {
+                showStatus("请输入邮箱和密码/授权码", "error");
+                return;
+            }
+
+            fetchBtn.disabled = true;
+            showStatus(`<span class="spinner"></span>正在连接邮箱...`, "loading");
+
+            try {
+                const response = await axios.post("http://localhost:8080/api/fetch-bills", {
+                    email: email,
+                    authCode: authCode,
+                    imapServer: IMAP_SERVERS[emailType],
+                    useMock: false,
+                    usePop3: true
+                });
+
+                if (response.data.success) {
+                    billData = response.data.data;
+                    showStatus(`✅ ${response.data.message}`, "success");
+                    renderDashboard();
+                } else {
+                    showStatus(`❌ ${response.data.message}`, "error");
+                }
+            } catch (error) {
+                showStatus(`❌ 连接失败: 请确保后端服务已启动在 http://localhost:8080`, "error");
+                console.error(error);
+            } finally {
+                fetchBtn.disabled = false;
+            }
+        }
+
+        function renderDashboard() {
+            document.getElementById("emptyState").style.display = "none";
+            document.getElementById("statsGrid").style.display = "grid";
+            document.getElementById("dashboard").style.display = "grid";
+            document.getElementById("billList").style.display = "block";
+
+            updateStats();
+            renderCharts();
+            renderBillList();
+        }
+
+        function updateStats() {
+            const total = billData.reduce((sum, b) => sum + b.amount, 0);
+            const avg = Math.round(total / billData.length);
+            const max = Math.max(...billData.map(b => b.amount));
+
+            document.getElementById("totalAmount").textContent = `¥${total.toFixed(2)}`;
+            document.getElementById("billCount").textContent = billData.length;
+            document.getElementById("avgAmount").textContent = `¥${avg.toFixed(2)}`;
+            document.getElementById("maxAmount").textContent = `¥${max.toFixed(2)}`;
+        }
+
+        function renderCharts() {
+            // 月度消费
+            const monthlyData = {};
+            billData.forEach(bill => {
+                const date = new Date(bill.date);
+                const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                monthlyData[month] = (monthlyData[month] || 0) + bill.amount;
+            });
+
+            renderChart("monthlyChart", {
+                type: "line",
+                labels: Object.keys(monthlyData).sort(),
+                data: Object.values(monthlyData),
+                label: "月消费",
+                borderColor: "#667eea",
+                backgroundColor: "rgba(102, 126, 234, 0.1)"
+            });
+
+            // 类别分布
+            const categoryData = {};
+            billData.forEach(bill => {
+                categoryData[bill.category] = (categoryData[bill.category] || 0) + bill.amount;
+            });
+
+            renderChart("categoryChart", {
+                type: "doughnut",
+                labels: Object.keys(categoryData),
+                data: Object.values(categoryData),
+                backgroundColor: ["#667eea", "#764ba2", "#f093fb", "#4facfe", "#00f2fe"]
+            });
+
+            // 消费对比分析（环比）
+            const now = new Date();
+            const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const lastMonth = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
+            
+            const thisMonthTotal = billData
+                .filter(b => b.date.startsWith(thisMonth))
+                .reduce((sum, b) => sum + b.amount, 0);
+            
+            const lastMonthTotal = billData
+                .filter(b => b.date.startsWith(lastMonth))
+                .reduce((sum, b) => sum + b.amount, 0);
+            
+            const monthOverMonth = lastMonthTotal > 0 
+                ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal * 100).toFixed(1)
+                : 0;
+
+            renderChart("comparisonChart", {
+                type: "bar",
+                labels: ["本月消费", "上月消费"],
+                data: [thisMonthTotal, lastMonthTotal],
+                label: "消费金额",
+                backgroundColor: ["#667eea", "#f093fb"]
+            });
+
+            // 消费热力图（一周分布）
+            const weekData = [0, 0, 0, 0, 0, 0, 0];
+            const weekLabels = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+            
+            billData.forEach(bill => {
+                const day = new Date(bill.date).getDay();
+                weekData[day] += bill.amount;
+            });
+
+            renderChart("heatmapChart", {
+                type: "bar",
+                labels: weekLabels,
+                data: weekData,
+                label: "消费金额",
+                backgroundColor: weekData.map((val, idx) => {
+                    const colors = ["#667eea", "#764ba2", "#f093fb", "#4facfe", "#00f2fe", "#fa709a", "#fee140"];
+                    return colors[idx];
+                })
+            });
+
+            // 消费排行
+            const topMerchants = Object.entries(
+                billData.reduce((acc, bill) => {
+                    acc[bill.merchant] = (acc[bill.merchant] || 0) + bill.amount;
+                    return acc;
+                }, {})
+            )
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+            renderChart("topChart", {
+                type: "bar",
+                labels: topMerchants.map(item => item[0]),
+                data: topMerchants.map(item => item[1]),
+                label: "消费金额",
+                backgroundColor: "#764ba2"
+            });
+
+            // 日消费分布
+            const dailyData = {};
+            billData.forEach(bill => {
+                const date = new Date(bill.date);
+                const day = date.getDate();
+                dailyData[day] = (dailyData[day] || 0) + bill.amount;
+            });
+
+            const days = Array.from({length: 31}, (_, i) => i + 1);
+            renderChart("dailyChart", {
+                type: "bar",
+                labels: days,
+                data: days.map(day => dailyData[day] || 0),
+                label: "日消费",
+                backgroundColor: "#4facfe"
+            });
+        }
+
+        function renderChart(canvasId, config) {
+            const ctx = document.getElementById(canvasId).getContext("2d");
+            
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+
+            charts[canvasId] = new Chart(ctx, {
+                type: config.type,
+                data: {
+                    labels: config.labels,
+                    datasets: [{
+                        label: config.label,
+                        data: config.data,
+                        borderColor: config.borderColor,
+                        backgroundColor: config.backgroundColor,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: config.type === "line"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: config.type !== "line"
+                        }
+                    },
+                    scales: config.type === "doughnut" ? {} : {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return "¥" + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderBillList() {
+            // 更新分类筛选器
+            const categories = [...new Set(billData.map(b => b.category))].sort();
+            const categoryFilter = document.getElementById("categoryFilter");
+            categoryFilter.innerHTML = '<option value="all">全部分类</option>' + 
+                categories.map(c => `<option value="${c}">${c}</option>`).join("");
+            
+            // 应用筛选和排序
+            filterBills();
+        }
+        
+        function filterBills() {
+            const searchMerchant = document.getElementById("searchMerchant").value.toLowerCase();
+            const minAmount = parseFloat(document.getElementById("minAmount").value) || 0;
+            const maxAmount = parseFloat(document.getElementById("maxAmount").value) || Infinity;
+            const dateFilter = document.getElementById("dateFilter").value;
+            const categoryFilter = document.getElementById("categoryFilter").value;
+            const sortOrder = document.getElementById("sortOrder").value;
+            const groupBy = document.getElementById("groupBy").value;
+            
+            let filtered = [...billData];
+            
+            // 搜索商家
+            if (searchMerchant) {
+                filtered = filtered.filter(b => b.merchant.toLowerCase().includes(searchMerchant));
+            }
+            
+            // 金额范围筛选
+            filtered = filtered.filter(b => b.amount >= minAmount && b.amount <= maxAmount);
+            
+            // 日期筛选
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            if (dateFilter === "today") {
+                filtered = filtered.filter(b => new Date(b.date) >= today);
+            } else if (dateFilter === "week") {
+                const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                filtered = filtered.filter(b => new Date(b.date) >= weekAgo);
+            } else if (dateFilter === "month") {
+                const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                filtered = filtered.filter(b => new Date(b.date) >= monthAgo);
+            } else if (dateFilter === "year") {
+                const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+                filtered = filtered.filter(b => new Date(b.date) >= yearAgo);
+            }
+            
+            // 分类筛选
+            if (categoryFilter !== "all") {
+                filtered = filtered.filter(b => b.category === categoryFilter);
+            }
+            
+            // 排序
+            if (sortOrder === "date-desc") {
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else if (sortOrder === "date-asc") {
+                filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+            } else if (sortOrder === "amount-desc") {
+                filtered.sort((a, b) => b.amount - a.amount);
+            } else if (sortOrder === "amount-asc") {
+                filtered.sort((a, b) => a.amount - b.amount);
+            }
+            
+            // 更新统计信息
+            const total = filtered.reduce((sum, b) => sum + b.amount, 0);
+            const avg = filtered.length > 0 ? total / filtered.length : 0;
+            document.getElementById("statsText").innerHTML = 
+                `📊 筛选结果: ${filtered.length} 条记录 | 总金额: ¥${total.toFixed(2)} | 平均: ¥${avg.toFixed(2)}`;
+            
+            // 分组显示
+            if (groupBy === "none") {
+                renderBillItems(filtered);
+            } else {
+                renderGroupedBills(filtered, groupBy);
+            }
+        }
+        
+        function renderGroupedBills(bills, groupBy) {
+            const groups = {};
+            
+            bills.forEach(bill => {
+                let key;
+                const date = new Date(bill.date);
+                
+                if (groupBy === "date") {
+                    key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                } else if (groupBy === "month") {
+                    key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                } else if (groupBy === "year") {
+                    key = `${date.getFullYear()}年`;
+                } else if (groupBy === "category") {
+                    key = bill.category;
+                }
+                
+                if (!groups[key]) {
+                    groups[key] = [];
+                }
+                groups[key].push(bill);
+            });
+            
+            // 排序分组键
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                if (groupBy === "category") {
+                    return a.localeCompare(b, 'zh-CN');
+                }
+                return b.localeCompare(a); // 日期降序
+            });
+            
+            let html = "";
+            sortedKeys.forEach(key => {
+                const groupBills = groups[key];
+                const groupTotal = groupBills.reduce((sum, b) => sum + b.amount, 0);
+                
+                html += `
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2)); border-radius: 8px; margin-bottom: 10px; cursor: pointer;" onclick="toggleGroup('${key}')">
+                            <h3 style="margin: 0; font-size: 16px;">${key}</h3>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <span style="font-size: 14px; color: #a0aec0;">${groupBills.length} 条</span>
+                                <span style="font-size: 16px; font-weight: bold; color: #667eea;">¥${groupTotal.toFixed(2)}</span>
+                                <span id="arrow-${key}" style="font-size: 12px;">▼</span>
+                            </div>
+                        </div>
+                        <div id="group-${key}" style="padding-left: 10px;">
+                            ${groupBills.map(bill => {
+                                const date = new Date(bill.date);
+                                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                                return `
+                                    <div class="bill-item">
+                                        <div class="bill-info">
+                                            <h3>${bill.merchant}</h3>
+                                            <p>${dateStr} · ${bill.category}</p>
+                                        </div>
+                                        <div class="bill-amount">¥${bill.amount.toFixed(2)}</div>
+                                    </div>
+                                `;
+                            }).join("")}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById("billItems").innerHTML = html;
+        }
+        
+        function toggleGroup(key) {
+            const group = document.getElementById(`group-${key}`);
+            const arrow = document.getElementById(`arrow-${key}`);
+            
+            if (group.style.display === "none") {
+                group.style.display = "block";
+                arrow.textContent = "▼";
+            } else {
+                group.style.display = "none";
+                arrow.textContent = "▶";
+            }
+        }
+        
+        function renderBillItems(bills) {
+            const html = bills.map(bill => {
+                const date = new Date(bill.date);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                return `
+                    <div class="bill-item">
+                        <div class="bill-info">
+                            <h3>${bill.merchant}</h3>
+                            <p>${dateStr} · ${bill.category}</p>
+                        </div>
+                        <div class="bill-amount">¥${bill.amount.toFixed(2)}</div>
+                    </div>
+                `;
+            }).join("");
+
+            document.getElementById("billItems").innerHTML = html;
+        }
+
+        function exportToExcel() {
+            if (billData.length === 0) {
+                alert("没有数据可导出");
+                return;
+            }
+            
+            const ws = XLSX.utils.json_to_sheet(billData.map(b => ({
+                "日期": b.date,
+                "商家": b.merchant,
+                "分类": b.category,
+                "金额": b.amount,
+                "来源": b.source
+            })));
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "账单明细");
+            
+            const fileName = `账单分析_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        function exportToPDF() {
+            if (billData.length === 0) {
+                alert("没有数据可导出");
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.text("账单分析报告", 14, 22);
+            
+            doc.setFontSize(11);
+            doc.text(`生成日期: ${new Date().toLocaleDateString('zh-CN')}`, 14, 32);
+            doc.text(`总记录数: ${billData.length}`, 14, 40);
+            doc.text(`总金额: ¥${billData.reduce((sum, b) => sum + b.amount, 0).toFixed(2)}`, 14, 48);
+            
+            const tableData = billData.slice(0, 100).map(b => [
+                b.date,
+                b.merchant.substring(0, 20),
+                b.category,
+                `¥${b.amount.toFixed(2)}`
+            ]);
+            
+            doc.autoTable({
+                head: [["日期", "商家", "分类", "金额"]],
+                body: tableData,
+                startY: 56,
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [102, 126, 234] }
+            });
+            
+            const fileName = `账单分析_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+        }
+
+        function showStatus(message, type) {
+            const statusEl = document.getElementById("status");
+            statusEl.innerHTML = message;
+            statusEl.className = `status ${type}`;
+        }
+    </script>
+</body>
+</html>
