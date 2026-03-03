@@ -13,12 +13,12 @@ rm -rf "${APP_DIR}"
 mkdir -p "${MACOS_DIR}"
 mkdir -p "${RESOURCES_DIR}"
 
-cat > "${MACOS_DIR}/${APP_NAME}" << 'EOF'
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/启动应用.command"
+
+cat > "${MACOS_DIR}/${APP_NAME}" << EOF
 #!/bin/bash
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-APP_ROOT="$( cd "${SCRIPT_DIR}/../../.." && pwd )"
-cd "${APP_ROOT}"
-./启动应用.command
+cd "$(dirname "$0")/../../.."
+osascript -e 'tell application "Terminal" to do script "cd \"'$(pwd)'\" && ./启动应用.command"'
 EOF
 
 chmod +x "${MACOS_DIR}/${APP_NAME}"
@@ -71,3 +71,7 @@ fi
 
 echo "✅ Mac应用程序包创建完成: ${APP_DIR}"
 echo "📱 您可以双击 ${APP_DIR} 来启动应用"
+echo ""
+echo "💡 提示："
+echo "   - 双击应用会在终端中启动"
+echo "   - 请保持终端窗口打开"
