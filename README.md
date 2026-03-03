@@ -43,18 +43,20 @@
 
 ## 安装
 
-### 1. 克隆仓库
+### 方式一：本地运行
+
+#### 1. 克隆仓库
 ```bash
-git clone <repository-url>
-cd pingan/pingan-dashboard
+git clone https://github.com/sdlyingyong/BillAnalytics.git
+cd BillAnalytics
 ```
 
-### 2. 安装Python依赖
+#### 2. 安装Python依赖
 ```bash
-pip install flask flask-cors pypdf2
+pip install -r backend/requirements.txt
 ```
 
-### 3. 启动后端服务
+#### 3. 启动后端服务
 ```bash
 cd backend
 python app.py
@@ -62,13 +64,43 @@ python app.py
 
 后端服务将运行在 http://localhost:8080
 
-### 4. 启动前端服务
+#### 4. 启动前端服务
 ```bash
 cd frontend
 python -m http.server 8081
 ```
 
 前端页面访问地址：http://localhost:8081/index.html
+
+### 方式二：部署到Vercel（推荐）
+
+#### 1. 安装Vercel CLI
+```bash
+npm install -g vercel
+```
+
+#### 2. 登录Vercel
+```bash
+vercel login
+```
+
+#### 3. 部署项目
+```bash
+cd BillAnalytics
+vercel
+```
+
+#### 4. 按照提示操作
+- 选择您的账户
+- 确认项目名称
+- 等待部署完成
+
+部署成功后，Vercel会提供一个在线访问地址，例如：`https://bill-analytics.vercel.app`
+
+**注意：** Vercel免费版有一些限制：
+- 函数执行时间限制：10秒
+- 内存限制：1024MB
+- 不支持持久化存储
 
 ## 使用说明
 

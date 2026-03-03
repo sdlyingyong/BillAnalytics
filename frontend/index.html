@@ -437,7 +437,12 @@
             showStatus(`<span class="spinner"></span>正在连接邮箱...`, "loading");
 
             try {
-                const response = await axios.post("http://localhost:8080/api/fetch-bills", {
+                // 使用相对路径，支持本地和Vercel部署
+                const apiBaseUrl = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:8080' 
+                    : '';
+                
+                const response = await axios.post(`${apiBaseUrl}/api/fetch-bills`, {
                     email: email,
                     authCode: authCode,
                     imapServer: IMAP_SERVERS[emailType],
@@ -453,7 +458,10 @@
                     showStatus(`❌ ${response.data.message}`, "error");
                 }
             } catch (error) {
-                showStatus(`❌ 连接失败: 请确保后端服务已启动在 http://localhost:8080`, "error");
+                const errorMsg = window.location.hostname === 'localhost' 
+                    ? '连接失败: 请确保后端服务已启动在 http://localhost:8080'
+                    : '连接失败: 请稍后重试';
+                showStatus(`❌ ${errorMsg}`, "error");
                 console.error(error);
             } finally {
                 fetchBtn.disabled = false;

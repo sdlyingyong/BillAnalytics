@@ -585,6 +585,8 @@ def health():
         "timestamp": datetime.now().isoformat()
     })
 
+# Vercel部署需要导出app对象
+# 本地开发时运行以下代码
 if __name__ == '__main__':
     print("🚀 平安银行账单分析系统后端启动")
     print("📍 API服务: http://localhost:8080")
