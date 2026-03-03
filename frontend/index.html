@@ -437,15 +437,13 @@
             showStatus(`<span class="spinner"></span>正在连接邮箱...`, "loading");
 
             try {
-                // 使用相对路径，支持本地和Vercel部署
-                const apiBaseUrl = window.location.hostname === 'localhost' 
-                    ? 'http://localhost:8080' 
+                // 使用相对路径，支持本地、Vercel和桌面应用
+                const apiBaseUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                    ? `http://${window.location.hostname}:8080`
                     : '';
                 
-                // Vercel API路径
-                const apiPath = window.location.hostname === 'localhost'
-                    ? '/api/fetch-bills'
-                    : '/api/index';
+                // API路径
+                const apiPath = '/api/fetch-bills';
                 
                 const response = await axios.post(`${apiBaseUrl}${apiPath}`, {
                     email: email,
@@ -463,8 +461,8 @@
                     showStatus(`❌ ${response.data.message}`, "error");
                 }
             } catch (error) {
-                const errorMsg = window.location.hostname === 'localhost' 
-                    ? '连接失败: 请确保后端服务已启动在 http://localhost:8080'
+                const errorMsg = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                    ? '连接失败: 请确保后端服务已启动'
                     : '连接失败: 请稍后重试';
                 showStatus(`❌ ${errorMsg}`, "error");
                 console.error(error);

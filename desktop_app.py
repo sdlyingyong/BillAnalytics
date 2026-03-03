@@ -5,7 +5,7 @@ import sys
 import os
 import threading
 import webbrowser
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import imaplib
 import poplib
@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from email.header import decode_header
 import PyPDF2
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='frontend')
 CORS(app)
 
 def decode_email_header(header):
@@ -292,6 +292,14 @@ def parse_bill_from_pdf_text(pdf_text, filename=""):
     
     return bills
 
+@app.route('/')
+def index():
+    return send_from_directory('frontend', 'index.html')
+
+@app.route('/frontend/<path:filename>')
+def serve_frontend(filename):
+    return send_from_directory('frontend', filename)
+
 @app.route('/api/fetch-bills', methods=['POST'])
 def fetch_bills():
     try:
@@ -480,7 +488,7 @@ def main():
         import webview
         window = webview.create_window(
             '平安银行账单分析系统',
-            'http://127.0.0.1:8080/frontend/index.html',
+            'http://127.0.0.1:8080/',
             width=1400,
             height=900,
             resizable=True,
@@ -490,7 +498,7 @@ def main():
     except ImportError:
         print("❌ 未安装 pywebview 库")
         print("正在使用浏览器打开...")
-        webbrowser.open('http://127.0.0.1:8080/frontend/index.html')
+        webbrowser.open('http://127.0.0.1:8080/')
         
         try:
             while True:
