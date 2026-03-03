@@ -250,18 +250,30 @@
         }
 
         .bill-list {
-            background: white;
+            background: rgba(30, 30, 46, 0.95);
             border-radius: 12px;
             padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-mode .bill-list {
+            background: white;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: none;
         }
 
         .bill-item {
             padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        body.light-mode .bill-item {
+            border-bottom: 1px solid #f0f0f0;
         }
 
         .bill-item:last-child {
@@ -270,30 +282,64 @@
 
         .bill-info h3 {
             font-size: 14px;
-            color: #333;
+            color: #e0e0e0;
             margin-bottom: 5px;
+        }
+
+        body.light-mode .bill-info h3 {
+            color: #333;
         }
 
         .bill-info p {
             font-size: 12px;
+            color: #a0a0a0;
+        }
+
+        body.light-mode .bill-info p {
             color: #999;
         }
 
         .bill-amount {
             font-size: 18px;
             font-weight: bold;
+            color: #e57373;
+        }
+
+        body.light-mode .bill-amount {
             color: #d32f2f;
+        }
+
+        .year-section {
+            margin-bottom: 30px;
+        }
+
+        .year-header {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            font-weight: bold;
+        }
+
+        body.light-mode .year-header {
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
         }
 
         .spinner {
             display: inline-block;
             width: 16px;
             height: 16px;
-            border: 2px solid #f3f3f3;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-top: 2px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-right: 8px;
+        }
+
+        body.light-mode .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
         }
 
         @keyframes spin {
@@ -440,7 +486,7 @@
                     <select id="sortOrder" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
                         <option value="date-desc">日期降序</option>
                         <option value="date-asc">日期升序</option>
-                        <option value="amount-desc">金额降序</option>
+                        <option value="amount-desc" selected>金额降序</option>
                         <option value="amount-asc">金额升序</option>
                     </select>
                 </div>
@@ -451,7 +497,7 @@
                         <option value="none">不分组</option>
                         <option value="date">按日期</option>
                         <option value="month">按月份</option>
-                        <option value="year">按年份</option>
+                        <option value="year" selected>按年份</option>
                         <option value="category">按分类</option>
                     </select>
                 </div>
@@ -833,12 +879,15 @@
             
             let html = "";
             sortedKeys.forEach(key => {
-                const groupBills = groups[key];
+                let groupBills = groups[key];
+                // 在分组内按金额从大到小排序
+                groupBills.sort((a, b) => b.amount - a.amount);
+                
                 const groupTotal = groupBills.reduce((sum, b) => sum + b.amount, 0);
                 
                 html += `
-                    <div style="margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2)); border-radius: 8px; margin-bottom: 10px; cursor: pointer;" onclick="toggleGroup('${key}')">
+                    <div class="year-section">
+                        <div class="year-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2)); border-radius: 8px; margin-bottom: 10px; cursor: pointer;" onclick="toggleGroup('${key}')">
                             <h3 style="margin: 0; font-size: 16px;">${key}</h3>
                             <div style="display: flex; align-items: center; gap: 15px;">
                                 <span style="font-size: 14px; color: #a0aec0;">${groupBills.length} 条</span>
