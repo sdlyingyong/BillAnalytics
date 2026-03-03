@@ -442,7 +442,12 @@
                     ? 'http://localhost:8080' 
                     : '';
                 
-                const response = await axios.post(`${apiBaseUrl}/api/fetch-bills`, {
+                // Vercel API路径
+                const apiPath = window.location.hostname === 'localhost'
+                    ? '/api/fetch-bills'
+                    : '/api/index';
+                
+                const response = await axios.post(`${apiBaseUrl}${apiPath}`, {
                     email: email,
                     authCode: authCode,
                     imapServer: IMAP_SERVERS[emailType],
