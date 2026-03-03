@@ -211,84 +211,52 @@ def categorize_merchant(merchant):
     return "其他消费"
 
 def parse_bill_from_pdf_text(pdf_text, filename=""):
-    """从PDF文本中解析账单信息"""
+    """从PDF文本中解析账单数据"""
     bills = []
     
-    lines = pdf_text.split('\n')
+    print(f"\n========== 开始解析PDF文本 ==========")
+    print(f"PDF文本长度: {len(pdf_text)}")
     
-    for i, line in enumerate(lines):
-        line = line.strip()
-        
-        if not line:
-            continue
-        
-        if re.search(r'消费日期|交易日期|记账日期|日期', line):
-            continue
-        
-        if re.search(r'摘要|商户|交易摘要', line):
-            continue
-        
-        if re.search(r'金额|人民币|交易金额', line):
-            continue
-        
-        if re.search(r'合计|总计|余额', line):
-            continue
-        
-        patterns = [
-            (r'(\d{4}[-/]\d{1,2}[-/]\d{1,2})\s+(.+?)\s+([-]?\d+\.?\d*)', 'date_merchant_amount'),
-            (r'(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\s+(.+?)\s+([-]?\d+\.?\d*)', 'date_merchant_amount'),
-            (r'(.+?)\s+([-]?\d+\.?\d*)\s+(\d{4}[-/]\d{1,2}[-/]\d{1,2})', 'merchant_amount_date'),
-        ]
-        
-        for pattern, pattern_type in patterns:
-            match = re.search(pattern, line)
-            if match:
-                if pattern_type == 'date_merchant_amount':
-                    date_str, merchant, amount = match.groups()
-                elif pattern_type == 'merchant_amount_date':
-                    merchant, amount, date_str = match.groups()
-                else:
-                    continue
+    pattern = r'(\d{4}-\d{2}-\d{2})\s+\d{4}-\d{2}-\d{2}\s+(.+?)\s+￥(-?\d+\.?\d*)'
+    
+    matches = re.findall(pattern, pdf_text)
+    print(f"匹配到 {len(matches)} 条交易记录")
+    
+    for match in matches:
+        try:
+            date = match[0]
+            merchant = match[1].strip()
+            amount_str = match[2]
+            
+            amount = abs(float(amount_str))
+            
+            exclude_keywords = ['交易说明', 'Description', '人民币金额', 'RMB Amount', 
+                              '还款', '还款金抵扣', '一键还款', '口袋银行', '自动还款', 
+                              '溢缴款', '利息', '手续费', '年费', '滞纳金', '退款', 
+                              '退货', '冲正', '撤销', '退回']
+            
+            is_excluded = any(keyword in merchant for keyword in exclude_keywords)
+            
+            if amount > 0 and len(merchant) > 0 and not is_excluded:
+                category = categorize_merchant(merchant)
                 
-                try:
-                    amount_float = float(amount)
-                    
-                    if amount_float == 0:
-                        continue
-                    
-                    if re.search(r'还款|退款|返还|入账', merchant, re.IGNORECASE):
-                        continue
-                    
-                    date_formats = [
-                        '%Y-%m-%d', '%Y/%m/%d',
-                        '%d-%m-%Y', '%d/%m/%Y',
-                        '%m-%d-%Y', '%m/%d/%Y',
-                    ]
-                    
-                    parsed_date = None
-                    for fmt in date_formats:
-                        try:
-                            parsed_date = datetime.strptime(date_str, fmt)
-                            break
-                        except:
-                            pass
-                    
-                    if not parsed_date:
-                        continue
-                    
-                    category = categorize_merchant(merchant)
-                    
-                    bills.append({
-                        'date': parsed_date.strftime('%Y-%m-%d'),
-                        'merchant': merchant.strip(),
-                        'amount': abs(amount_float),
-                        'type': '支出' if amount_float < 0 else '收入',
-                        'category': category,
-                        'source': filename
-                    })
-                    
-                except:
-                    continue
+                bills.append({
+                    'date': date,
+                    'merchant': merchant,
+                    'amount': amount,
+                    'type': '支出',
+                    'category': category,
+                    'source': filename
+                })
+                print(f"  ✅ {date} | {merchant} | ￥{amount}")
+            elif is_excluded:
+                print(f"  ❌ 过滤掉还款/费用记录: {merchant}")
+        except Exception as e:
+            print(f"解析账单失败: {e}")
+            continue
+    
+    print(f"从PDF中提取了 {len(bills)} 条有效账单记录")
+    print("========== PDF文本解析结束 ==========\n")
     
     return bills
 
