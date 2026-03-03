@@ -18,9 +18,14 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
             padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .container {
@@ -29,17 +34,54 @@
         }
 
         header {
-            background: white;
+            background: rgba(30, 30, 46, 0.95);
             border-radius: 12px;
             padding: 30px;
             margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-mode header {
+            background: white;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: none;
         }
 
         h1 {
-            color: #333;
+            color: #e0e0e0;
             margin-bottom: 20px;
             font-size: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.light-mode h1 {
+            color: #333;
+        }
+
+        .theme-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .theme-toggle {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         .config-section {
@@ -107,21 +149,36 @@
         }
 
         .status.loading {
+            background: rgba(25, 118, 210, 0.2);
+            color: #64b5f6;
+            display: block;
+        }
+
+        body.light-mode .status.loading {
             background: #e3f2fd;
             color: #1976d2;
-            display: block;
         }
 
         .status.success {
-            background: #e8f5e9;
-            color: #388e3c;
+            background: rgba(56, 142, 60, 0.2);
+            color: #81c784;
             display: block;
         }
 
+        body.light-mode .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
         .status.error {
+            background: rgba(211, 47, 47, 0.2);
+            color: #e57373;
+            display: block;
+        }
+
+        body.light-mode .status.error {
             background: #ffebee;
             color: #d32f2f;
-            display: block;
         }
 
         .dashboard {
@@ -132,17 +189,30 @@
         }
 
         .card {
-            background: white;
+            background: rgba(30, 30, 46, 0.95);
             border-radius: 12px;
             padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-mode .card {
+            background: white;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: none;
         }
 
         .card h2 {
             font-size: 16px;
-            color: #333;
+            color: #e0e0e0;
             margin-bottom: 15px;
             padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.light-mode .card h2 {
+            color: #333;
             border-bottom: 2px solid #f0f0f0;
         }
 
@@ -248,7 +318,10 @@
 <body>
     <div class="container">
         <header>
-            <h1>📊 平安银行账单分析 Dashboard</h1>
+            <h1>
+                <span>📊 平安银行账单分析 Dashboard</span>
+                <button class="theme-toggle" onclick="toggleTheme()">🌙 深色模式</button>
+            </h1>
             
             <div class="config-section">
                 <div class="form-group">
@@ -307,11 +380,6 @@
             <div class="card">
                 <h2>🥧 消费类别分布</h2>
                 <canvas id="categoryChart"></canvas>
-            </div>
-
-            <div class="card">
-                <h2>📊 消费对比分析</h2>
-                <canvas id="comparisonChart"></canvas>
             </div>
 
             <div class="card">
@@ -421,6 +489,32 @@
         let charts = {};
         let billData = [];
 
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.querySelector('.theme-toggle');
+            
+            if (body.classList.contains('light-mode')) {
+                body.classList.remove('light-mode');
+                btn.textContent = '🌙 深色模式';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.add('light-mode');
+                btn.textContent = '☀️ 浅色模式';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // 页面加载时检查主题设置
+        window.addEventListener('load', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const btn = document.querySelector('.theme-toggle');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                btn.textContent = '☀️ 浅色模式';
+            }
+        });
+
         async function fetchBills() {
             const email = document.getElementById("email").value;
             const emailType = document.getElementById("emailType").value;
@@ -524,49 +618,30 @@
                 backgroundColor: ["#667eea", "#764ba2", "#f093fb", "#4facfe", "#00f2fe"]
             });
 
-            // 消费对比分析（环比）
-            const now = new Date();
-            const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const lastMonth = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
-            
-            const thisMonthTotal = billData
-                .filter(b => b.date.startsWith(thisMonth))
-                .reduce((sum, b) => sum + b.amount, 0);
-            
-            const lastMonthTotal = billData
-                .filter(b => b.date.startsWith(lastMonth))
-                .reduce((sum, b) => sum + b.amount, 0);
-            
-            const monthOverMonth = lastMonthTotal > 0 
-                ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal * 100).toFixed(1)
-                : 0;
-
-            renderChart("comparisonChart", {
-                type: "bar",
-                labels: ["本月消费", "上月消费"],
-                data: [thisMonthTotal, lastMonthTotal],
-                label: "消费金额",
-                backgroundColor: ["#667eea", "#f093fb"]
-            });
-
-            // 消费热力图（一周分布）
-            const weekData = [0, 0, 0, 0, 0, 0, 0];
-            const weekLabels = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+            // 消费热力图（月度消费分布）
+            const monthLabels = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+            const monthData = new Array(12).fill(0);
             
             billData.forEach(bill => {
-                const day = new Date(bill.date).getDay();
-                weekData[day] += bill.amount;
+                const date = new Date(bill.date);
+                const month = date.getMonth();
+                monthData[month] += bill.amount;
+            });
+
+            // 根据金额大小生成颜色强度
+            const maxMonthAmount = Math.max(...monthData);
+            const heatmapColors = monthData.map(amount => {
+                if (amount === 0) return 'rgba(102, 126, 234, 0.1)';
+                const intensity = amount / maxMonthAmount;
+                return `rgba(102, 126, 234, ${0.3 + intensity * 0.7})`;
             });
 
             renderChart("heatmapChart", {
                 type: "bar",
-                labels: weekLabels,
-                data: weekData,
-                label: "消费金额",
-                backgroundColor: weekData.map((val, idx) => {
-                    const colors = ["#667eea", "#764ba2", "#f093fb", "#4facfe", "#00f2fe", "#fa709a", "#fee140"];
-                    return colors[idx];
-                })
+                labels: monthLabels,
+                data: monthData,
+                label: "月度消费金额",
+                backgroundColor: heatmapColors
             });
 
             // 消费排行
