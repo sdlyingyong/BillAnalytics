@@ -70,3 +70,13 @@ temp/
 
 # PDF exports
 exports/*.pdf
+
+# Application bundles
+*.app
+*.lnk
+
+# Icon files
+icon.iconset/
+icon.png
+icon.icns
+icon.ico
