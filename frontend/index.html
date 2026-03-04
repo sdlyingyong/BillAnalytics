@@ -10,6 +10,18 @@
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
     <style>
+        :root {
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --text-tertiary: #718096;
+        }
+
+        body.light-mode {
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --text-tertiary: #718096;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -1724,7 +1736,7 @@
             
             if (activeFiltered.length === 0) {
                 document.getElementById("billItems").innerHTML = 
-                    `<div style="text-align: center; padding: 40px; color: #a0aec0;">
+                    `<div style="text-align: center; padding: 40px; color: var(--text-secondary);">
                         <p>暂无账单数据</p>
                     </div>`;
                 return;
@@ -1752,7 +1764,7 @@
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <span id="arrow-${dateKey}" style="font-size: 12px; transition: transform 0.3s;">▼</span>
                                 <span style="font-weight: bold; color: #667eea;">${date}</span>
-                                <span style="font-size: 12px; color: #a0aec0;">${bills.length}笔</span>
+                                <span style="font-size: 12px; color: var(--text-secondary);">${bills.length}笔</span>
                             </div>
                             <div style="font-weight: bold; color: #667eea;">¥${dateTotal.toFixed(2)}</div>
                         </div>
@@ -1762,12 +1774,12 @@
                                 return `
                                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02);">
                                         <div style="flex: 1;">
-                                            <div style="font-weight: bold; margin-bottom: 5px;">${bill.merchant}</div>
-                                            <div style="font-size: 12px; color: #a0aec0;">${bill.category}</div>
+                                            <div style="font-weight: bold; margin-bottom: 5px; color: var(--text-primary);">${bill.merchant}</div>
+                                            <div style="font-size: 12px; color: var(--text-secondary);">${bill.category}</div>
                                         </div>
                                         <div style="text-align: right;">
-                                            <div style="font-weight: bold; color: ${isRefunded ? '#a0aec0' : '#ef4444'};">${isRefunded ? '已退款' : '-¥' + bill.amount.toFixed(2)}</div>
-                                            <div style="font-size: 12px; color: #a0aec0;">${bill.time || ''}</div>
+                                            <div style="font-weight: bold; color: ${isRefunded ? 'var(--text-secondary)' : '#ef4444'};">${isRefunded ? '已退款' : '-¥' + bill.amount.toFixed(2)}</div>
+                                            <div style="font-size: 12px; color: var(--text-secondary);">${bill.time || ''}</div>
                                         </div>
                                     </div>
                                 `;
