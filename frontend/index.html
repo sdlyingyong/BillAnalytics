@@ -195,6 +195,17 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: move;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
         }
 
         body.light-mode .card {
@@ -270,6 +281,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: opacity 0.3s ease;
         }
 
         body.light-mode .bill-item {
@@ -278,6 +290,49 @@
 
         .bill-item:last-child {
             border-bottom: none;
+        }
+
+        .bill-item.refunded {
+            opacity: 0.5;
+        }
+
+        .bill-item.refunded .bill-info h3,
+        .bill-item.refunded .bill-info p,
+        .bill-item.refunded .bill-amount {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .bill-item:hover .refund-btn {
+            opacity: 1;
+        }
+
+        .refund-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .refund-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .refund-btn.refunded {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            opacity: 1;
+        }
+
+        .bill-info {
+            flex: 1;
         }
 
         .bill-info h3 {
@@ -416,31 +471,66 @@
             </div>
         </div>
 
+        <!-- 退款标记管理 -->
+        <div id="refundManager" style="display: none; text-align: center; margin: 20px 0;">
+            <button onclick="clearAllRefunds()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 10px;">
+                🗑️ 清除退款标记
+            </button>
+            <button onclick="clearLocalData()" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                🔄 重新获取数据
+            </button>
+            <span id="refundCount" style="margin-left: 15px; color: #a0aec0; font-size: 14px;"></span>
+        </div>
+
         <!-- 图表区域 -->
         <div class="dashboard" id="dashboard" style="display: none;">
-            <div class="card">
-                <h2>📈 月度消费趋势</h2>
+            <div class="card" id="monthlyCard">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <h2 id="monthlyTitle" style="margin: 0;">📈 月度消费趋势</h2>
+                        <div id="monthlyYearSelector" style="display: flex; align-items: center; gap: 10px;">
+                            <button id="monthlyPrevYear" onclick="changeMonthlyYear(-1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                ←
+                            </button>
+                            <span id="monthlyYearDisplay" style="font-size: 16px; font-weight: bold; color: #667eea; min-width: 60px; text-align: center;"></span>
+                            <button id="monthlyNextYear" onclick="changeMonthlyYear(1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                →
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <canvas id="monthlyChart"></canvas>
             </div>
 
-            <div class="card">
+            <div class="card" id="categoryCard">
                 <h2>🥧 消费类别分布</h2>
                 <canvas id="categoryChart"></canvas>
             </div>
 
-            <div class="card">
-                <h2>🔥 消费热力图</h2>
+            <div class="card" id="heatmapCard">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <h2 style="margin: 0;">🔥 消费热力图</h2>
+                        <div id="heatmapYearSelector" style="display: flex; align-items: center; gap: 10px;">
+                            <button id="heatmapPrevYear" onclick="changeHeatmapYear(-1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                ←
+                            </button>
+                            <span id="heatmapYearDisplay" style="font-size: 16px; font-weight: bold; color: #667eea; min-width: 60px; text-align: center;"></span>
+                            <button id="heatmapNextYear" onclick="changeHeatmapYear(1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                →
+                            </button>
+                        </div>
+                    </div>
+                    <button id="heatmapBackBtn" onclick="backHeatmap()" style="display: none; background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                        ← 返回
+                    </button>
+                </div>
                 <canvas id="heatmapChart"></canvas>
             </div>
 
-            <div class="card">
+            <div class="card" id="topCard">
                 <h2>📊 消费排行 Top 5</h2>
                 <canvas id="topChart"></canvas>
-            </div>
-
-            <div class="card">
-                <h2>📉 日消费分布</h2>
-                <canvas id="dailyChart"></canvas>
             </div>
         </div>
 
@@ -471,6 +561,7 @@
                         <option value="week">本周</option>
                         <option value="month">本月</option>
                         <option value="year">本年</option>
+                        <option value="custom">自定义</option>
                     </select>
                 </div>
                 
@@ -534,6 +625,294 @@
 
         let charts = {};
         let billData = [];
+        let refundedItems = new Set(JSON.parse(localStorage.getItem('refundedItems') || '[]'));
+        let heatmapView = 'monthly'; // 'monthly' 或 'daily'
+        let selectedMonth = null; // 选中的月份 (0-11)
+        let selectedYear = null; // 选中的年份
+        let heatmapYear = new Date().getFullYear(); // 热力图当前显示的年份
+        let monthlyYear = new Date().getFullYear(); // 月度趋势图当前显示的年份
+
+        // 页面加载时检查本地存储的账单数据
+        window.addEventListener('load', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const btn = document.querySelector('.theme-toggle');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                btn.textContent = '☀️ 浅色模式';
+            }
+
+            // 检查本地存储的账单数据
+            const savedBills = localStorage.getItem('billData');
+            if (savedBills) {
+                try {
+                    billData = JSON.parse(savedBills);
+                    renderDashboard();
+                    showStatus('✅ 已加载本地账单数据', 'success');
+                } catch (error) {
+                    console.error('加载本地数据失败:', error);
+                }
+            }
+
+            // 初始化拖拽功能
+            initDragAndDrop();
+        });
+
+        function toggleRefund(index) {
+            // 保存当前滚动位置
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            if (refundedItems.has(index)) {
+                refundedItems.delete(index);
+            } else {
+                refundedItems.add(index);
+            }
+            localStorage.setItem('refundedItems', JSON.stringify([...refundedItems]));
+            
+            // 更新所有显示
+            filterBills();
+            updateStats();
+            renderCharts();
+            updateRefundCount();
+            
+            // 恢复滚动位置
+            window.scrollTo(scrollLeft, scrollTop);
+        }
+
+        function clearAllRefunds() {
+            // 保存当前滚动位置
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            if (confirm('确定要清除所有退款标记吗？')) {
+                refundedItems.clear();
+                localStorage.setItem('refundedItems', JSON.stringify([]));
+                
+                // 更新所有显示
+                filterBills();
+                updateStats();
+                renderCharts();
+                updateRefundCount();
+                
+                // 恢复滚动位置
+                window.scrollTo(scrollLeft, scrollTop);
+            }
+        }
+
+        function clearLocalData() {
+            if (confirm('确定要清除本地账单数据吗？这将需要重新从邮箱获取数据。')) {
+                localStorage.removeItem('billData');
+                billData = [];
+                document.getElementById("emptyState").style.display = "block";
+                document.getElementById("statsGrid").style.display = "none";
+                document.getElementById("refundManager").style.display = "none";
+                document.getElementById("dashboard").style.display = "none";
+                document.getElementById("billList").style.display = "none";
+                showStatus('✅ 本地数据已清除，请重新获取数据', 'success');
+            }
+        }
+
+        function updateRefundCount() {
+            const count = refundedItems.size;
+            const refundCountEl = document.getElementById('refundCount');
+            if (count > 0) {
+                refundCountEl.textContent = `已标记 ${count} 条退款记录`;
+            } else {
+                refundCountEl.textContent = '';
+            }
+        }
+
+        function changeHeatmapYear(delta) {
+            heatmapYear += delta;
+            monthlyYear = heatmapYear; // 同步月度趋势图的年份
+            updateHeatmapYearDisplay();
+            updateMonthlyYearDisplay();
+            renderCharts();
+        }
+
+        function changeMonthlyYear(delta) {
+            monthlyYear += delta;
+            heatmapYear = monthlyYear; // 同步热力图的年份
+            updateMonthlyYearDisplay();
+            updateHeatmapYearDisplay();
+            renderCharts();
+        }
+
+        function updateHeatmapYearDisplay() {
+            const yearDisplay = document.getElementById('heatmapYearDisplay');
+            if (yearDisplay) {
+                yearDisplay.textContent = `${heatmapYear}年`;
+            }
+            
+            // 更新年份选择器的显示/隐藏
+            const yearSelector = document.getElementById('heatmapYearSelector');
+            const backBtn = document.getElementById('heatmapBackBtn');
+            if (heatmapView === 'monthly') {
+                yearSelector.style.display = 'flex';
+                backBtn.style.display = 'none';
+            } else {
+                yearSelector.style.display = 'none';
+                backBtn.style.display = 'block';
+            }
+        }
+
+        function updateMonthlyYearDisplay() {
+            const yearDisplay = document.getElementById('monthlyYearDisplay');
+            if (yearDisplay) {
+                yearDisplay.textContent = `${monthlyYear}年`;
+            }
+        }
+
+        function initDragAndDrop() {
+            const dashboard = document.getElementById('dashboard');
+            const cards = dashboard.querySelectorAll('.card');
+            
+            // 从本地存储加载模块顺序
+            const savedOrder = localStorage.getItem('cardOrder');
+            if (savedOrder) {
+                try {
+                    const order = JSON.parse(savedOrder);
+                    order.forEach(cardId => {
+                        const card = document.getElementById(cardId);
+                        if (card) {
+                            dashboard.appendChild(card);
+                        }
+                    });
+                } catch (error) {
+                    console.error('加载模块顺序失败:', error);
+                }
+            }
+            
+            cards.forEach(card => {
+                card.setAttribute('draggable', 'true');
+                
+                card.addEventListener('dragstart', (e) => {
+                    card.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                    saveCardOrder();
+                });
+                
+                card.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const draggingCard = document.querySelector('.dragging');
+                    if (draggingCard !== card) {
+                        const allCards = Array.from(dashboard.querySelectorAll('.card'));
+                        const draggingIndex = allCards.indexOf(draggingCard);
+                        const targetIndex = allCards.indexOf(card);
+                        
+                        if (draggingIndex < targetIndex) {
+                            card.parentNode.insertBefore(draggingCard, card.nextSibling);
+                        } else {
+                            card.parentNode.insertBefore(draggingCard, card);
+                        }
+                    }
+                });
+            });
+        }
+
+        function saveCardOrder() {
+            const dashboard = document.getElementById('dashboard');
+            const cards = Array.from(dashboard.querySelectorAll('.card'));
+            const order = cards.map(card => card.id);
+            localStorage.setItem('cardOrder', JSON.stringify(order));
+        }
+
+        function drillDownHeatmap(monthIndex) {
+            // 保存当前滚动位置
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            // 检查该年份该月份是否有数据
+            const hasData = billData.some(bill => {
+                const date = new Date(bill.date);
+                return date.getMonth() === monthIndex && date.getFullYear() === heatmapYear;
+            });
+            
+            if (!hasData) {
+                alert(`${heatmapYear}年${monthIndex + 1}月没有消费数据`);
+                return;
+            }
+            
+            // 切换到每日视图
+            heatmapView = 'daily';
+            selectedMonth = monthIndex;
+            selectedYear = heatmapYear;
+            
+            // 更新显示
+            updateHeatmapYearDisplay();
+            
+            // 重新渲染图表
+            renderCharts();
+            
+            // 恢复滚动位置
+            window.scrollTo(scrollLeft, scrollTop);
+        }
+
+        function backHeatmap() {
+            // 保存当前滚动位置
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            // 切换回月度视图
+            heatmapView = 'monthly';
+            selectedMonth = null;
+            selectedYear = null;
+            
+            // 更新显示（显示年份选择器，隐藏返回按钮）
+            updateHeatmapYearDisplay();
+            
+            // 重新渲染图表
+            renderCharts();
+            
+            // 恢复滚动位置
+            window.scrollTo(scrollLeft, scrollTop);
+        }
+
+        function showDailyBills(day) {
+            // 构建日期字符串
+            const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // 设置日期筛选为"自定义"
+            document.getElementById('dateFilter').value = 'custom';
+            
+            // 设置自定义日期输入
+            let customDateInput = document.getElementById('customDateInput');
+            if (!customDateInput) {
+                customDateInput = document.createElement('input');
+                customDateInput.id = 'customDateInput';
+                customDateInput.type = 'date';
+                customDateInput.style.display = 'none';
+                document.getElementById('dateFilter').parentNode.appendChild(customDateInput);
+            }
+            customDateInput.value = dateStr;
+            
+            // 设置排序为金额从大到小
+            document.getElementById('sortOrder').value = 'amount-desc';
+            
+            // 设置分组为"不分组"
+            document.getElementById('groupBy').value = 'none';
+            
+            // 重新筛选账单
+            filterBills();
+            
+            // 滚动到账单列表
+            setTimeout(() => {
+                const billList = document.getElementById('billList');
+                if (billList) {
+                    billList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        }
 
         function toggleTheme() {
             const body = document.body;
@@ -549,17 +928,6 @@
                 localStorage.setItem('theme', 'light');
             }
         }
-
-        // 页面加载时检查主题设置
-        window.addEventListener('load', () => {
-            const savedTheme = localStorage.getItem('theme');
-            const btn = document.querySelector('.theme-toggle');
-            
-            if (savedTheme === 'light') {
-                document.body.classList.add('light-mode');
-                btn.textContent = '☀️ 浅色模式';
-            }
-        });
 
         async function fetchBills() {
             const email = document.getElementById("email").value;
@@ -595,6 +963,8 @@
 
                 if (response.data.success) {
                     billData = response.data.data;
+                    // 保存账单数据到本地存储
+                    localStorage.setItem('billData', JSON.stringify(billData));
                     showStatus(`✅ ${response.data.message}`, "success");
                     renderDashboard();
                 } else {
@@ -614,46 +984,100 @@
         function renderDashboard() {
             document.getElementById("emptyState").style.display = "none";
             document.getElementById("statsGrid").style.display = "grid";
+            document.getElementById("refundManager").style.display = "block";
             document.getElementById("dashboard").style.display = "grid";
             document.getElementById("billList").style.display = "block";
 
             updateStats();
             renderCharts();
             renderBillList();
+            updateRefundCount();
+            updateHeatmapYearDisplay();
+            updateMonthlyYearDisplay();
         }
 
         function updateStats() {
-            const total = billData.reduce((sum, b) => sum + b.amount, 0);
-            const avg = Math.round(total / billData.length);
-            const max = Math.max(...billData.map(b => b.amount));
+            // 排除已退款的项目
+            const activeBills = billData.filter((_, idx) => !refundedItems.has(idx));
+            
+            const total = activeBills.reduce((sum, b) => sum + b.amount, 0);
+            const avg = activeBills.length > 0 ? Math.round(total / activeBills.length) : 0;
+            const max = activeBills.length > 0 ? Math.max(...activeBills.map(b => b.amount)) : 0;
 
             document.getElementById("totalAmount").textContent = `¥${total.toFixed(2)}`;
-            document.getElementById("billCount").textContent = billData.length;
+            document.getElementById("billCount").textContent = activeBills.length;
             document.getElementById("avgAmount").textContent = `¥${avg.toFixed(2)}`;
             document.getElementById("maxAmount").textContent = `¥${max.toFixed(2)}`;
         }
 
         function renderCharts() {
+            // 排除已退款的项目
+            const activeBills = billData.filter((_, idx) => !refundedItems.has(idx));
+            
+            console.log('渲染图表，活跃账单数量:', activeBills.length);
+            
             // 月度消费
-            const monthlyData = {};
-            billData.forEach(bill => {
-                const date = new Date(bill.date);
-                const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                monthlyData[month] = (monthlyData[month] || 0) + bill.amount;
-            });
+            if (heatmapView === 'daily') {
+                // 每日视图：显示选中月份的每日数据
+                const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+                const dailyData = new Array(daysInMonth).fill(0);
+                
+                activeBills.forEach(bill => {
+                    const date = new Date(bill.date);
+                    if (date.getMonth() === selectedMonth && date.getFullYear() === selectedYear) {
+                        const day = date.getDate();
+                        dailyData[day - 1] += bill.amount;
+                    }
+                });
 
-            renderChart("monthlyChart", {
-                type: "line",
-                labels: Object.keys(monthlyData).sort(),
-                data: Object.values(monthlyData),
-                label: "月消费",
-                borderColor: "#667eea",
-                backgroundColor: "rgba(102, 126, 234, 0.1)"
-            });
+                const dayLabels = Array.from({length: daysInMonth}, (_, i) => `${i + 1}日`);
+                
+                // 更新标题为日消费趋势
+                document.getElementById('monthlyTitle').textContent = '📈 日消费趋势';
+                
+                renderChart("monthlyChart", {
+                    type: "line",
+                    labels: dayLabels,
+                    data: dailyData,
+                    label: `${selectedYear}年${selectedMonth + 1}月每日消费`,
+                    borderColor: "#667eea",
+                    backgroundColor: "rgba(102, 126, 234, 0.1)",
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const dayIndex = elements[0].index;
+                            showDailyBills(dayIndex + 1);
+                        }
+                    }
+                });
+            } else {
+                // 月度视图：显示12个月的数据
+                const monthlyData = new Array(12).fill(0);
+                activeBills.forEach(bill => {
+                    const date = new Date(bill.date);
+                    if (date.getFullYear() === monthlyYear) {
+                        const month = date.getMonth();
+                        monthlyData[month] += bill.amount;
+                    }
+                });
+
+                const monthLabels = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+                
+                // 更新标题为月度消费趋势
+                document.getElementById('monthlyTitle').textContent = '📈 月度消费趋势';
+                
+                renderChart("monthlyChart", {
+                    type: "line",
+                    labels: monthLabels,
+                    data: monthlyData,
+                    label: "月消费",
+                    borderColor: "#667eea",
+                    backgroundColor: "rgba(102, 126, 234, 0.1)"
+                });
+            }
 
             // 类别分布
             const categoryData = {};
-            billData.forEach(bill => {
+            activeBills.forEach(bill => {
                 categoryData[bill.category] = (categoryData[bill.category] || 0) + bill.amount;
             });
 
@@ -665,34 +1089,79 @@
             });
 
             // 消费热力图（月度消费分布）
-            const monthLabels = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
-            const monthData = new Array(12).fill(0);
-            
-            billData.forEach(bill => {
-                const date = new Date(bill.date);
-                const month = date.getMonth();
-                monthData[month] += bill.amount;
-            });
+            if (heatmapView === 'monthly') {
+                const monthLabels = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+                const monthData = new Array(12).fill(0);
+                
+                activeBills.forEach(bill => {
+                    const date = new Date(bill.date);
+                    if (date.getFullYear() === heatmapYear) {
+                        const month = date.getMonth();
+                        monthData[month] += bill.amount;
+                    }
+                });
 
-            // 根据金额大小生成颜色强度
-            const maxMonthAmount = Math.max(...monthData);
-            const heatmapColors = monthData.map(amount => {
-                if (amount === 0) return 'rgba(102, 126, 234, 0.1)';
-                const intensity = amount / maxMonthAmount;
-                return `rgba(102, 126, 234, ${0.3 + intensity * 0.7})`;
-            });
+                // 根据金额大小生成颜色强度
+                const maxMonthAmount = Math.max(...monthData);
+                const heatmapColors = monthData.map(amount => {
+                    if (amount === 0) return 'rgba(102, 126, 234, 0.1)';
+                    const intensity = amount / maxMonthAmount;
+                    return `rgba(102, 126, 234, ${0.3 + intensity * 0.7})`;
+                });
 
-            renderChart("heatmapChart", {
-                type: "bar",
-                labels: monthLabels,
-                data: monthData,
-                label: "月度消费金额",
-                backgroundColor: heatmapColors
-            });
+                renderChart("heatmapChart", {
+                    type: "bar",
+                    labels: monthLabels,
+                    data: monthData,
+                    label: "月度消费金额",
+                    backgroundColor: heatmapColors,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            drillDownHeatmap(index);
+                        }
+                    }
+                });
+            } else {
+                // 每日消费视图
+                const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+                const dailyLabels = Array.from({length: daysInMonth}, (_, i) => `${i + 1}日`);
+                const dailyData = new Array(daysInMonth).fill(0);
+                
+                activeBills.forEach(bill => {
+                    const date = new Date(bill.date);
+                    if (date.getMonth() === selectedMonth && date.getFullYear() === selectedYear) {
+                        const day = date.getDate();
+                        dailyData[day - 1] += bill.amount;
+                    }
+                });
+
+                // 根据金额大小生成颜色强度
+                const maxDailyAmount = Math.max(...dailyData);
+                const dailyColors = dailyData.map(amount => {
+                    if (amount === 0) return 'rgba(102, 126, 234, 0.1)';
+                    const intensity = amount / maxDailyAmount;
+                    return `rgba(102, 126, 234, ${0.3 + intensity * 0.7})`;
+                });
+
+                renderChart("heatmapChart", {
+                    type: "bar",
+                    labels: dailyLabels,
+                    data: dailyData,
+                    label: `${selectedMonth + 1}月每日消费`,
+                    backgroundColor: dailyColors,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const dayIndex = elements[0].index;
+                            showDailyBills(dayIndex + 1);
+                        }
+                    }
+                });
+            }
 
             // 消费排行
             const topMerchants = Object.entries(
-                billData.reduce((acc, bill) => {
+                activeBills.reduce((acc, bill) => {
                     acc[bill.merchant] = (acc[bill.merchant] || 0) + bill.amount;
                     return acc;
                 }, {})
@@ -707,33 +1176,25 @@
                 label: "消费金额",
                 backgroundColor: "#764ba2"
             });
-
-            // 日消费分布
-            const dailyData = {};
-            billData.forEach(bill => {
-                const date = new Date(bill.date);
-                const day = date.getDate();
-                dailyData[day] = (dailyData[day] || 0) + bill.amount;
-            });
-
-            const days = Array.from({length: 31}, (_, i) => i + 1);
-            renderChart("dailyChart", {
-                type: "bar",
-                labels: days,
-                data: days.map(day => dailyData[day] || 0),
-                label: "日消费",
-                backgroundColor: "#4facfe"
-            });
         }
 
         function renderChart(canvasId, config) {
-            const ctx = document.getElementById(canvasId).getContext("2d");
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                console.error('画布元素不存在:', canvasId);
+                return;
+            }
+            
+            const ctx = canvas.getContext("2d");
             
             if (charts[canvasId]) {
+                console.log('销毁旧图表:', canvasId);
                 charts[canvasId].destroy();
             }
 
-            charts[canvasId] = new Chart(ctx, {
+            console.log('创建新图表:', canvasId, '数据点数量:', config.data.length);
+            
+            const chartConfig = {
                 type: config.type,
                 data: {
                     labels: config.labels,
@@ -764,9 +1225,14 @@
                                 }
                             }
                         }
-                    }
+                    },
+                    onClick: config.onClick ? (event, elements) => {
+                        config.onClick(event, elements);
+                    } : undefined
                 }
-            });
+            };
+            
+            charts[canvasId] = new Chart(ctx, chartConfig);
         }
 
         function renderBillList() {
@@ -789,7 +1255,7 @@
             const sortOrder = document.getElementById("sortOrder").value;
             const groupBy = document.getElementById("groupBy").value;
             
-            let filtered = [...billData];
+            let filtered = billData.map((bill, index) => ({ ...bill, originalIndex: index }));
             
             // 搜索商家
             if (searchMerchant) {
@@ -814,6 +1280,17 @@
             } else if (dateFilter === "year") {
                 const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
                 filtered = filtered.filter(b => new Date(b.date) >= yearAgo);
+            } else if (dateFilter === "custom") {
+                const customDateInput = document.getElementById('customDateInput');
+                if (customDateInput && customDateInput.value) {
+                    const customDate = new Date(customDateInput.value);
+                    const nextDay = new Date(customDate);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    filtered = filtered.filter(b => {
+                        const billDate = new Date(b.date);
+                        return billDate >= customDate && billDate < nextDay;
+                    });
+                }
             }
             
             // 分类筛选
@@ -832,11 +1309,12 @@
                 filtered.sort((a, b) => a.amount - b.amount);
             }
             
-            // 更新统计信息
-            const total = filtered.reduce((sum, b) => sum + b.amount, 0);
-            const avg = filtered.length > 0 ? total / filtered.length : 0;
+            // 更新统计信息（排除已退款的项目）
+            const activeFiltered = filtered.filter(b => !refundedItems.has(b.originalIndex));
+            const total = activeFiltered.reduce((sum, b) => sum + b.amount, 0);
+            const avg = activeFiltered.length > 0 ? total / activeFiltered.length : 0;
             document.getElementById("statsText").innerHTML = 
-                `📊 筛选结果: ${filtered.length} 条记录 | 总金额: ¥${total.toFixed(2)} | 平均: ¥${avg.toFixed(2)}`;
+                `📊 筛选结果: ${activeFiltered.length} 条记录 | 总金额: ¥${total.toFixed(2)} | 平均: ¥${avg.toFixed(2)}`;
             
             // 分组显示
             if (groupBy === "none") {
@@ -883,29 +1361,41 @@
                 // 在分组内按金额从大到小排序
                 groupBills.sort((a, b) => b.amount - a.amount);
                 
-                const groupTotal = groupBills.reduce((sum, b) => sum + b.amount, 0);
+                // 计算分组总金额（排除已退款的项目）
+                const groupTotal = groupBills
+                    .filter(b => !refundedItems.has(b.originalIndex))
+                    .reduce((sum, b) => sum + b.amount, 0);
+                
+                // 计算分组数量（排除已退款的项目）
+                const groupCount = groupBills.filter(b => !refundedItems.has(b.originalIndex)).length;
                 
                 html += `
                     <div class="year-section">
                         <div class="year-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2)); border-radius: 8px; margin-bottom: 10px; cursor: pointer;" onclick="toggleGroup('${key}')">
                             <h3 style="margin: 0; font-size: 16px;">${key}</h3>
                             <div style="display: flex; align-items: center; gap: 15px;">
-                                <span style="font-size: 14px; color: #a0aec0;">${groupBills.length} 条</span>
+                                <span style="font-size: 14px; color: #a0aec0;">${groupCount} 条</span>
                                 <span style="font-size: 16px; font-weight: bold; color: #667eea;">¥${groupTotal.toFixed(2)}</span>
                                 <span id="arrow-${key}" style="font-size: 12px;">▼</span>
                             </div>
                         </div>
                         <div id="group-${key}" style="padding-left: 10px;">
-                            ${groupBills.map(bill => {
+                            ${groupBills.map((bill, idx) => {
                                 const date = new Date(bill.date);
                                 const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                                const isRefunded = refundedItems.has(bill.originalIndex);
                                 return `
-                                    <div class="bill-item">
+                                    <div class="bill-item ${isRefunded ? 'refunded' : ''}" data-index="${bill.originalIndex}">
                                         <div class="bill-info">
                                             <h3>${bill.merchant}</h3>
                                             <p>${dateStr} · ${bill.category}</p>
                                         </div>
-                                        <div class="bill-amount">¥${bill.amount.toFixed(2)}</div>
+                                        <div style="display: flex; align-items: center;">
+                                            <div class="bill-amount">¥${bill.amount.toFixed(2)}</div>
+                                            <button class="refund-btn ${isRefunded ? 'refunded' : ''}" onclick="toggleRefund(${bill.originalIndex})">
+                                                ${isRefunded ? '✓ 已退款' : '标记退款'}
+                                            </button>
+                                        </div>
                                     </div>
                                 `;
                             }).join("")}
@@ -934,13 +1424,19 @@
             const html = bills.map(bill => {
                 const date = new Date(bill.date);
                 const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                const isRefunded = refundedItems.has(bill.originalIndex);
                 return `
-                    <div class="bill-item">
+                    <div class="bill-item ${isRefunded ? 'refunded' : ''}" data-index="${bill.originalIndex}">
                         <div class="bill-info">
                             <h3>${bill.merchant}</h3>
                             <p>${dateStr} · ${bill.category}</p>
                         </div>
-                        <div class="bill-amount">¥${bill.amount.toFixed(2)}</div>
+                        <div style="display: flex; align-items: center;">
+                            <div class="bill-amount">¥${bill.amount.toFixed(2)}</div>
+                            <button class="refund-btn ${isRefunded ? 'refunded' : ''}" onclick="toggleRefund(${bill.originalIndex})">
+                                ${isRefunded ? '✓ 已退款' : '标记退款'}
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join("");
@@ -949,12 +1445,15 @@
         }
 
         function exportToExcel() {
-            if (billData.length === 0) {
+            // 排除已退款的项目
+            const activeBills = billData.filter((_, idx) => !refundedItems.has(idx));
+            
+            if (activeBills.length === 0) {
                 alert("没有数据可导出");
                 return;
             }
             
-            const ws = XLSX.utils.json_to_sheet(billData.map(b => ({
+            const ws = XLSX.utils.json_to_sheet(activeBills.map(b => ({
                 "日期": b.date,
                 "商家": b.merchant,
                 "分类": b.category,
@@ -970,7 +1469,10 @@
         }
 
         function exportToPDF() {
-            if (billData.length === 0) {
+            // 排除已退款的项目
+            const activeBills = billData.filter((_, idx) => !refundedItems.has(idx));
+            
+            if (activeBills.length === 0) {
                 alert("没有数据可导出");
                 return;
             }
@@ -983,10 +1485,10 @@
             
             doc.setFontSize(11);
             doc.text(`生成日期: ${new Date().toLocaleDateString('zh-CN')}`, 14, 32);
-            doc.text(`总记录数: ${billData.length}`, 14, 40);
-            doc.text(`总金额: ¥${billData.reduce((sum, b) => sum + b.amount, 0).toFixed(2)}`, 14, 48);
+            doc.text(`总记录数: ${activeBills.length}`, 14, 40);
+            doc.text(`总金额: ¥${activeBills.reduce((sum, b) => sum + b.amount, 0).toFixed(2)}`, 14, 48);
             
-            const tableData = billData.slice(0, 100).map(b => [
+            const tableData = activeBills.slice(0, 100).map(b => [
                 b.date,
                 b.merchant.substring(0, 20),
                 b.category,
