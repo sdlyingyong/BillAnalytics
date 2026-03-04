@@ -482,128 +482,191 @@
             <span id="refundCount" style="margin-left: 15px; color: #a0aec0; font-size: 14px;"></span>
         </div>
 
-        <!-- 图表区域 -->
-        <div class="dashboard" id="dashboard" style="display: none;">
-            <div class="card" id="monthlyCard">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <h2 id="monthlyTitle" style="margin: 0;">📈 月度消费趋势</h2>
-                        <div id="monthlyYearSelector" style="display: flex; align-items: center; gap: 10px;">
-                            <button id="monthlyPrevYear" onclick="changeMonthlyYear(-1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                                ←
-                            </button>
-                            <span id="monthlyYearDisplay" style="font-size: 16px; font-weight: bold; color: #667eea; min-width: 60px; text-align: center;"></span>
-                            <button id="monthlyNextYear" onclick="changeMonthlyYear(1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                                →
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <canvas id="monthlyChart"></canvas>
-            </div>
-
-            <div class="card" id="categoryCard">
-                <h2>🥧 消费类别分布</h2>
-                <canvas id="categoryChart"></canvas>
-            </div>
-
-            <div class="card" id="heatmapCard">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <h2 style="margin: 0;">🔥 消费热力图</h2>
-                        <div id="heatmapYearSelector" style="display: flex; align-items: center; gap: 10px;">
-                            <button id="heatmapPrevYear" onclick="changeHeatmapYear(-1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                                ←
-                            </button>
-                            <span id="heatmapYearDisplay" style="font-size: 16px; font-weight: bold; color: #667eea; min-width: 60px; text-align: center;"></span>
-                            <button id="heatmapNextYear" onclick="changeHeatmapYear(1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                                →
-                            </button>
-                        </div>
-                    </div>
-                    <button id="heatmapBackBtn" onclick="backHeatmap()" style="display: none; background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                        ← 返回
-                    </button>
-                </div>
-                <canvas id="heatmapChart"></canvas>
-            </div>
-
-            <div class="card" id="topCard">
-                <h2>📊 消费排行 Top 5</h2>
-                <canvas id="topChart"></canvas>
-            </div>
+        <!-- Tab导航栏 -->
+        <div id="tabNav" style="display: none; margin-bottom: 20px; border-bottom: 2px solid rgba(102, 126, 234, 0.3); padding-bottom: 10px;">
+            <button class="tab-btn active" onclick="switchTab('overview')" style="background: rgba(102, 126, 234, 0.3); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 10px; transition: all 0.3s ease;">
+                📊 概览
+            </button>
+            <button class="tab-btn" onclick="switchTab('bills')" style="background: rgba(255, 255, 255, 0.05); border: none; color: #a0aec0; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s ease;">
+                📋 明细分析
+            </button>
         </div>
 
-        <!-- 账单列表 -->
-        <div class="bill-list" id="billList" style="display: none;">
-            <h2 style="margin-bottom: 20px;">📋 账单明细</h2>
-            
-            <!-- 筛选和排序控件 -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">搜索商家</label>
-                    <input type="text" id="searchMerchant" placeholder="输入商家名称..." oninput="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
-                </div>
-                
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">金额范围</label>
-                    <div style="display: flex; gap: 5px;">
-                        <input type="number" id="minAmount" placeholder="最小" oninput="filterBills()" style="width: 50%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
-                        <input type="number" id="maxAmount" placeholder="最大" oninput="filterBills()" style="width: 50%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+        <!-- 主内容区域 -->
+        <div id="mainContent" style="display: none;">
+            <!-- 概览Tab -->
+            <div id="overviewTab" class="tab-content" style="display: block;">
+                <!-- 图表区域 -->
+                <div class="dashboard" id="dashboard">
+                    <div class="card" id="monthlyCard">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <h2 id="monthlyTitle" style="margin: 0;">📈 月度消费趋势</h2>
+                            <div id="monthlyYearSelector" style="display: flex; align-items: center; gap: 10px;">
+                                <button id="monthlyPrevYear" onclick="changeMonthlyYear(-1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                    ←
+                                </button>
+                                <span id="monthlyYearDisplay" style="font-size: 16px; font-weight: bold; color: #667eea; min-width: 60px; text-align: center;"></span>
+                                <button id="monthlyNextYear" onclick="changeMonthlyYear(1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                    →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <canvas id="monthlyChart"></canvas>
+                        </div>
+
+                        <div class="card" id="categoryCard">
+                    <h2>🥧 消费类别分布</h2>
+                    <canvas id="categoryChart"></canvas>
+                        </div>
+
+                        <div class="card" id="heatmapCard">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <h2 style="margin: 0;">🔥 消费热力图</h2>
+                            <div id="heatmapYearSelector" style="display: flex; align-items: center; gap: 10px;">
+                                <button id="heatmapPrevYear" onclick="changeHeatmapYear(-1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                    ←
+                                </button>
+                                <span id="heatmapYearDisplay" style="font-size: 16px; font-weight: bold; color: #667eea; min-width: 60px; text-align: center;"></span>
+                                <button id="heatmapNextYear" onclick="changeHeatmapYear(1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                    →
+                                </button>
+                            </div>
+                        </div>
+                        <button id="heatmapBackBtn" onclick="backHeatmap()" style="display: none; background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                            ← 返回
+                        </button>
+                    </div>
+                    <canvas id="heatmapChart"></canvas>
+                        </div>
+
+                        <div class="card" id="topCard">
+                            <h2>📊 消费排行 Top 5</h2>
+                            <canvas id="topChart"></canvas>
+                        </div>
+
+                        <!-- 频率分析内容 -->
+                        <div class="card" id="frequencyCard">
+                            <h2>📈 消费频率分析</h2>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                                <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #a0aec0;">日均消费次数</div>
+                                    <div id="avgDailyCount" style="font-size: 24px; font-weight: bold; color: #667eea;">0次</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #a0aec0;">日均消费金额</div>
+                                    <div id="avgDailyAmount" style="font-size: 24px; font-weight: bold; color: #667eea;">¥0</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #a0aec0;">周均消费次数</div>
+                                    <div id="avgWeeklyCount" style="font-size: 24px; font-weight: bold; color: #667eea;">0次</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #a0aec0;">周均消费金额</div>
+                                    <div id="avgWeeklyAmount" style="font-size: 24px; font-weight: bold; color: #667eea;">¥0</div>
+                                </div>
+                            </div>
+                            <canvas id="frequencyChart"></canvas>
+                        </div>
+
+                        <div class="card" id="weekdayCard">
+                            <h2>📅 工作日/周末对比</h2>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                                <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #a0aec0;">工作日消费</div>
+                                    <div id="weekdayAmount" style="font-size: 24px; font-weight: bold; color: #667eea;">¥0</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #a0aec0;">周末消费</div>
+                                    <div id="weekendAmount" style="font-size: 24px; font-weight: bold; color: #667eea;">¥0</div>
+                                </div>
+                            </div>
+                            <canvas id="weekdayChart"></canvas>
+                        </div>
+
+                        <!-- 日历内容 -->
+                        <div class="card" id="calendarCard">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h2 style="margin: 0;">📅 消费日历</h2>
+                                <div id="calendarYearSelector" style="display: flex; align-items: center; gap: 10px;">
+                                    <button id="calendarPrevMonth" onclick="changeCalendarMonth(-1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                        ←
+                                    </button>
+                                    <span id="calendarMonthDisplay" style="font-size: 16px; font-weight: bold; color: #667eea; min-width: 80px; text-align: center;"></span>
+                                    <button id="calendarNextMonth" onclick="changeCalendarMonth(1)" style="background: rgba(102, 126, 234, 0.2); border: 1px solid rgba(102, 126, 234, 0.3); color: #667eea; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                                        →
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; padding: 10px;"></div>
+                            <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-around; align-items: center;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 12px; color: #a0aec0;">本月日均消费</div>
+                                        <div id="calendarAvg" style="font-size: 20px; font-weight: bold; color: #667eea;">¥0</div>
+                                    </div>
+                                    <div style="display: flex; gap: 15px; align-items: center;">
+                                        <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 50%;"></div>
+                                        <span style="font-size: 12px; color: #a0aec0;">高于平均</span>
+                                        <div style="width: 20px; height: 20px; background: #f59e0b; border-radius: 50%;"></div>
+                                        <span style="font-size: 12px; color: #a0aec0;">接近平均</span>
+                                        <div style="width: 20px; height: 20px; background: #22c55e; border-radius: 50%;"></div>
+                                        <span style="font-size: 12px; color: #a0aec0;">低于平均</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">日期范围</label>
-                    <select id="dateFilter" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
-                        <option value="all">全部</option>
-                        <option value="today">今天</option>
-                        <option value="week">本周</option>
-                        <option value="month">本月</option>
-                        <option value="year">本年</option>
-                        <option value="custom">自定义</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">分类筛选</label>
-                    <select id="categoryFilter" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
-                        <option value="all">全部分类</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">排序方式</label>
-                    <select id="sortOrder" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
-                        <option value="date-desc">日期降序</option>
-                        <option value="date-asc">日期升序</option>
-                        <option value="amount-desc" selected>金额降序</option>
-                        <option value="amount-asc">金额升序</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">分组方式</label>
-                    <select id="groupBy" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
-                        <option value="none">不分组</option>
-                        <option value="date">按日期</option>
-                        <option value="month">按月份</option>
-                        <option value="year" selected>按年份</option>
-                        <option value="category">按分类</option>
-                    </select>
+            </div>
+
+            <!-- 账单明细Tab -->
+            <div id="billsTab" class="tab-content" style="display: none;">
+                <div class="bill-list" id="billList">
+                    <h2 style="margin-bottom: 20px;">📋 账单明细</h2>
+                    
+                    <!-- 筛选控件 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">搜索商家</label>
+                            <input type="text" id="searchMerchant" placeholder="输入商家名称..." oninput="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">金额范围</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="number" id="minAmount" placeholder="最小" oninput="filterBills()" style="width: 50%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                                <input type="number" id="maxAmount" placeholder="最大" oninput="filterBills()" style="width: 50%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">日期范围</label>
+                            <select id="dateFilter" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                                <option value="all">全部</option>
+                                <option value="today">今天</option>
+                                <option value="week">本周</option>
+                                <option value="month">本月</option>
+                                <option value="year">本年</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #a0aec0;">排序方式</label>
+                            <select id="sortOrder" onchange="filterBills()" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: white;">
+                                <option value="date-desc">日期降序</option>
+                                <option value="date-asc">日期升序</option>
+                                <option value="amount-desc" selected>金额降序</option>
+                                <option value="amount-asc">金额升序</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="billItems"></div>
                 </div>
             </div>
-            
-            <!-- 统计信息 -->
-            <div id="filterStats" style="margin-bottom: 15px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; font-size: 14px; display: flex; justify-content: space-between; align-items: center;">
-                <span id="statsText"></span>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="exportToExcel()" style="padding: 8px 16px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 14px;">📊 导出Excel</button>
-                    <button onclick="exportToPDF()" style="padding: 8px 16px; background: linear-gradient(135deg, #f093fb, #f5576c); border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 14px;">📄 导出PDF</button>
-                </div>
-            </div>
-            
-            <div id="billItems"></div>
         </div>
 
         <!-- 空状态 -->
@@ -631,6 +694,8 @@
         let selectedYear = null; // 选中的年份
         let heatmapYear = new Date().getFullYear(); // 热力图当前显示的年份
         let monthlyYear = new Date().getFullYear(); // 月度趋势图当前显示的年份
+        let calendarYear = new Date().getFullYear(); // 日历当前显示的年份
+        let calendarMonth = new Date().getMonth(); // 日历当前显示的月份
 
         // 页面加载时检查本地存储的账单数据
         window.addEventListener('load', () => {
@@ -707,8 +772,8 @@
                 document.getElementById("emptyState").style.display = "block";
                 document.getElementById("statsGrid").style.display = "none";
                 document.getElementById("refundManager").style.display = "none";
-                document.getElementById("dashboard").style.display = "none";
-                document.getElementById("billList").style.display = "none";
+                document.getElementById("tabNav").style.display = "none";
+                document.getElementById("mainContent").style.display = "none";
                 showStatus('✅ 本地数据已清除，请重新获取数据', 'success');
             }
         }
@@ -734,8 +799,11 @@
         function changeMonthlyYear(delta) {
             monthlyYear += delta;
             heatmapYear = monthlyYear; // 同步热力图的年份
+            calendarYear = monthlyYear; // 同步日历的年份
+            calendarMonth = 0; // 重置日历到1月
             updateMonthlyYearDisplay();
             updateHeatmapYearDisplay();
+            updateCalendarView(billData.filter((_, idx) => !refundedItems.has(idx)));
             renderCharts();
         }
 
@@ -878,32 +946,247 @@
             window.scrollTo(scrollLeft, scrollTop);
         }
 
+        function updateFrequencyAnalysis(activeBills) {
+            const dailyData = {};
+            activeBills.forEach(bill => {
+                const date = bill.date;
+                if (!dailyData[date]) {
+                    dailyData[date] = { count: 0, amount: 0 };
+                }
+                dailyData[date].count++;
+                dailyData[date].amount += bill.amount;
+            });
+
+            const days = Object.keys(dailyData).length;
+            let totalDailyCount = 0;
+            Object.values(dailyData).forEach(data => {
+                totalDailyCount += data.count;
+            });
+            const avgDailyCount = days > 0 ? (totalDailyCount / days).toFixed(1) : 0;
+            const avgDailyAmount = days > 0 ? (activeBills.reduce((sum, b) => sum + b.amount, 0) / days).toFixed(0) : 0;
+
+            const weeklyData = {};
+            activeBills.forEach(bill => {
+                const date = new Date(bill.date);
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                const weekKey = weekStart.toISOString().split('T')[0];
+                if (!weeklyData[weekKey]) {
+                    weeklyData[weekKey] = { count: 0, amount: 0 };
+                }
+                weeklyData[weekKey].count++;
+                weeklyData[weekKey].amount += bill.amount;
+            });
+
+            const weeks = Object.keys(weeklyData).length;
+            let totalWeeklyCount = 0;
+            Object.values(weeklyData).forEach(data => {
+                totalWeeklyCount += data.count;
+            });
+            const avgWeeklyCount = weeks > 0 ? (totalWeeklyCount / weeks).toFixed(1) : 0;
+            const avgWeeklyAmount = weeks > 0 ? (activeBills.reduce((sum, b) => sum + b.amount, 0) / weeks).toFixed(0) : 0;
+
+            document.getElementById('avgDailyCount').textContent = `${avgDailyCount}次`;
+            document.getElementById('avgDailyAmount').textContent = `¥${avgDailyAmount}`;
+            document.getElementById('avgWeeklyCount').textContent = `${avgWeeklyCount}次`;
+            document.getElementById('avgWeeklyAmount').textContent = `¥${avgWeeklyAmount}`;
+
+            const frequencyLabels = Object.keys(dailyData).slice(-30);
+            const frequencyData = frequencyLabels.map(date => dailyData[date].count);
+            renderChart("frequencyChart", {
+                type: "bar",
+                labels: frequencyLabels.map(date => date.slice(5)),
+                data: frequencyData,
+                label: "消费次数",
+                borderColor: "#667eea",
+                backgroundColor: "rgba(102, 126, 234, 0.6)"
+            });
+        }
+
+        function updateWeekdayAnalysis(activeBills) {
+            let weekdayAmount = 0;
+            let weekdayCount = 0;
+            let weekendAmount = 0;
+            let weekendCount = 0;
+
+            activeBills.forEach(bill => {
+                const date = new Date(bill.date);
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                    weekdayAmount += bill.amount;
+                    weekdayCount++;
+                } else {
+                    weekendAmount += bill.amount;
+                    weekendCount++;
+                }
+            });
+
+            const totalAmount = weekdayAmount + weekendAmount;
+            const weekdayPercent = totalAmount > 0 ? ((weekdayAmount / totalAmount) * 100).toFixed(1) : 0;
+            const weekendPercent = totalAmount > 0 ? ((weekendAmount / totalAmount) * 100).toFixed(1) : 0;
+
+            document.getElementById('weekdayAmount').textContent = `¥${weekdayAmount.toFixed(0)}`;
+            document.getElementById('weekendAmount').textContent = `¥${weekendAmount.toFixed(0)}`;
+
+            // 渲染工作日/周末对比图表
+            renderChart("weekdayChart", {
+                type: "bar",
+                labels: ["工作日", "周末"],
+                data: [weekdayAmount, weekendAmount],
+                label: "消费金额",
+                backgroundColor: ["rgba(102, 126, 234, 0.8)", "rgba(239, 68, 68, 0.8)"]
+            });
+        }
+
+        function updateCalendarView(activeBills) {
+            const year = calendarYear;
+            const month = calendarMonth;
+            const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            
+            const dailyData = {};
+            let totalAmount = 0;
+            let daysWithData = 0;
+
+            activeBills.forEach(bill => {
+                const date = new Date(bill.date);
+                if (date.getFullYear() === year && date.getMonth() === month) {
+                    const day = date.getDate();
+                    const key = `${month}-${day}`;
+                    if (!dailyData[key]) {
+                        dailyData[key] = 0;
+                    }
+                    dailyData[key] += bill.amount;
+                    totalAmount += bill.amount;
+                    daysWithData++;
+                }
+            });
+
+            const avgDaily = daysWithData > 0 ? (totalAmount / daysWithData).toFixed(0) : 0;
+            document.getElementById('calendarAvg').textContent = `¥${avgDaily}`;
+
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            
+            weekDays.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.style.padding = '8px';
+                dayHeader.style.fontWeight = 'bold';
+                dayHeader.style.color = '#a0aec0';
+                dayHeader.style.fontSize = '12px';
+                dayHeader.textContent = day;
+                calendarGrid.appendChild(dayHeader);
+            });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const days = daysInMonth[month];
+            
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.style.padding = '10px';
+                emptyDay.style.background = 'rgba(255,255,255,0.02)';
+                emptyDay.style.borderRadius = '5px';
+                calendarGrid.appendChild(emptyDay);
+            }
+            
+            for (let day = 1; day <= days; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.style.padding = '10px';
+                dayCell.style.borderRadius = '5px';
+                dayCell.style.cursor = 'pointer';
+                dayCell.style.transition = 'all 0.2s ease';
+                
+                const key = `${month}-${day}`;
+                const amount = dailyData[key] || 0;
+                
+                if (amount > 0) {
+                    const ratio = amount / avgDaily;
+                    if (ratio > 1.2) {
+                        dayCell.style.background = 'rgba(239, 68, 68, 0.8)';
+                    } else if (ratio < 0.8) {
+                        dayCell.style.background = 'rgba(34, 197, 94, 0.8)';
+                    } else {
+                        dayCell.style.background = 'rgba(245, 158, 11, 0.8)';
+                    }
+                    dayCell.style.color = 'white';
+                    dayCell.innerHTML = `<div style="font-size: 14px; font-weight: bold;">${day}</div><div style="font-size: 10px;">¥${amount.toFixed(0)}</div>`;
+                } else {
+                    dayCell.style.background = 'rgba(255,255,255,0.02)';
+                    dayCell.innerHTML = `<div style="font-size: 14px; color: #666;">${day}</div>`;
+                }
+                
+                dayCell.onclick = () => {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    
+                    // 切换到账单明细Tab
+                    switchTab('bills');
+                    
+                    // 筛选指定日期的账单
+                    let filtered = billData.map((bill, index) => ({ ...bill, originalIndex: index }));
+                    filtered = filtered.filter(b => b.date === dateStr);
+                    
+                    // 按日期降序排序
+                    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    // 渲染账单列表
+                    renderBillItems(filtered);
+                    
+                    setTimeout(() => {
+                        const billList = document.getElementById('billList');
+                        if (billList) {
+                            billList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 100);
+                };
+                
+                dayCell.onmouseover = () => {
+                    if (amount > 0) {
+                        dayCell.style.transform = 'scale(1.1)';
+                        dayCell.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+                    }
+                };
+                
+                dayCell.onmouseout = () => {
+                    dayCell.style.transform = 'scale(1)';
+                    dayCell.style.boxShadow = 'none';
+                };
+                
+                calendarGrid.appendChild(dayCell);
+            }
+
+            document.getElementById('calendarMonthDisplay').textContent = `${year}年${monthNames[month]}`;
+        }
+
+        function changeCalendarMonth(delta) {
+            calendarMonth += delta;
+            if (calendarMonth > 11) {
+                calendarMonth = 0;
+                calendarYear++;
+            } else if (calendarMonth < 0) {
+                calendarMonth = 11;
+                calendarYear--;
+            }
+            updateCalendarView(billData.filter((_, idx) => !refundedItems.has(idx)));
+        }
+
         function showDailyBills(day) {
             // 构建日期字符串
             const dateStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             
-            // 设置日期筛选为"自定义"
-            document.getElementById('dateFilter').value = 'custom';
+            // 切换到账单明细Tab
+            switchTab('bills');
             
-            // 设置自定义日期输入
-            let customDateInput = document.getElementById('customDateInput');
-            if (!customDateInput) {
-                customDateInput = document.createElement('input');
-                customDateInput.id = 'customDateInput';
-                customDateInput.type = 'date';
-                customDateInput.style.display = 'none';
-                document.getElementById('dateFilter').parentNode.appendChild(customDateInput);
-            }
-            customDateInput.value = dateStr;
+            // 筛选指定日期的账单
+            let filtered = billData.map((bill, index) => ({ ...bill, originalIndex: index }));
+            filtered = filtered.filter(b => b.date === dateStr);
             
-            // 设置排序为金额从大到小
-            document.getElementById('sortOrder').value = 'amount-desc';
+            // 按日期降序排序
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            // 设置分组为"不分组"
-            document.getElementById('groupBy').value = 'none';
-            
-            // 重新筛选账单
-            filterBills();
+            // 渲染账单列表
+            renderBillItems(filtered);
             
             // 滚动到账单列表
             setTimeout(() => {
@@ -912,6 +1195,37 @@
                     billList.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }, 100);
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['overview', 'bills'];
+            
+            tabs.forEach(tab => {
+                const tabBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+                if (tabBtn) {
+                    if (tab === tabName) {
+                        tabBtn.style.background = 'rgba(102, 126, 234, 0.3)';
+                        tabBtn.style.color = 'white';
+                    } else {
+                        tabBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+                        tabBtn.style.color = '#a0aec0';
+                    }
+                }
+            });
+            
+            // 切换Tab内容
+            tabs.forEach(tab => {
+                const tabContent = document.getElementById(`${tab}Tab`);
+                if (tabContent) {
+                    if (tab === tabName) {
+                        tabContent.style.display = 'block';
+                    } else {
+                        tabContent.style.display = 'none';
+                    }
+                }
+            });
+            
+            localStorage.setItem('activeTab', tabName);
         }
 
         function toggleTheme() {
@@ -985,8 +1299,12 @@
             document.getElementById("emptyState").style.display = "none";
             document.getElementById("statsGrid").style.display = "grid";
             document.getElementById("refundManager").style.display = "block";
+            document.getElementById("tabNav").style.display = "flex";
+            document.getElementById("mainContent").style.display = "block";
             document.getElementById("dashboard").style.display = "grid";
-            document.getElementById("billList").style.display = "block";
+
+            const activeTab = localStorage.getItem('activeTab') || 'overview';
+            switchTab(activeTab);
 
             updateStats();
             renderCharts();
@@ -1015,6 +1333,15 @@
             const activeBills = billData.filter((_, idx) => !refundedItems.has(idx));
             
             console.log('渲染图表，活跃账单数量:', activeBills.length);
+            
+            // 更新消费频率分析
+            updateFrequencyAnalysis(activeBills);
+            
+            // 更新工作日/周末对比
+            updateWeekdayAnalysis(activeBills);
+            
+            // 更新消费日历
+            updateCalendarView(activeBills);
             
             // 月度消费
             if (heatmapView === 'daily') {
@@ -1236,92 +1563,64 @@
         }
 
         function renderBillList() {
-            // 更新分类筛选器
-            const categories = [...new Set(billData.map(b => b.category))].sort();
-            const categoryFilter = document.getElementById("categoryFilter");
-            categoryFilter.innerHTML = '<option value="all">全部分类</option>' + 
-                categories.map(c => `<option value="${c}">${c}</option>`).join("");
-            
-            // 应用筛选和排序
             filterBills();
         }
         
         function filterBills() {
-            const searchMerchant = document.getElementById("searchMerchant").value.toLowerCase();
-            const minAmount = parseFloat(document.getElementById("minAmount").value) || 0;
-            const maxAmount = parseFloat(document.getElementById("maxAmount").value) || Infinity;
-            const dateFilter = document.getElementById("dateFilter").value;
-            const categoryFilter = document.getElementById("categoryFilter").value;
-            const sortOrder = document.getElementById("sortOrder").value;
-            const groupBy = document.getElementById("groupBy").value;
-            
             let filtered = billData.map((bill, index) => ({ ...bill, originalIndex: index }));
             
             // 搜索商家
-            if (searchMerchant) {
-                filtered = filtered.filter(b => b.merchant.toLowerCase().includes(searchMerchant));
+            const searchMerchant = document.getElementById("searchMerchant");
+            if (searchMerchant && searchMerchant.value) {
+                filtered = filtered.filter(b => b.merchant.toLowerCase().includes(searchMerchant.value.toLowerCase()));
             }
             
             // 金额范围筛选
+            const minAmountInput = document.getElementById("minAmount");
+            const maxAmountInput = document.getElementById("maxAmount");
+            const minAmount = minAmountInput ? parseFloat(minAmountInput.value) || 0 : 0;
+            const maxAmount = maxAmountInput ? parseFloat(maxAmountInput.value) || Infinity : Infinity;
             filtered = filtered.filter(b => b.amount >= minAmount && b.amount <= maxAmount);
             
             // 日期筛选
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            
-            if (dateFilter === "today") {
-                filtered = filtered.filter(b => new Date(b.date) >= today);
-            } else if (dateFilter === "week") {
-                const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                filtered = filtered.filter(b => new Date(b.date) >= weekAgo);
-            } else if (dateFilter === "month") {
-                const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-                filtered = filtered.filter(b => new Date(b.date) >= monthAgo);
-            } else if (dateFilter === "year") {
-                const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
-                filtered = filtered.filter(b => new Date(b.date) >= yearAgo);
-            } else if (dateFilter === "custom") {
-                const customDateInput = document.getElementById('customDateInput');
-                if (customDateInput && customDateInput.value) {
-                    const customDate = new Date(customDateInput.value);
-                    const nextDay = new Date(customDate);
-                    nextDay.setDate(nextDay.getDate() + 1);
-                    filtered = filtered.filter(b => {
-                        const billDate = new Date(b.date);
-                        return billDate >= customDate && billDate < nextDay;
-                    });
+            const dateFilter = document.getElementById("dateFilter");
+            if (dateFilter && dateFilter.value !== "all") {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                if (dateFilter.value === "today") {
+                    filtered = filtered.filter(b => new Date(b.date) >= today);
+                } else if (dateFilter.value === "week") {
+                    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    filtered = filtered.filter(b => new Date(b.date) >= weekAgo);
+                } else if (dateFilter.value === "month") {
+                    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    filtered = filtered.filter(b => new Date(b.date) >= monthAgo);
+                } else if (dateFilter.value === "year") {
+                    const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+                    filtered = filtered.filter(b => new Date(b.date) >= yearAgo);
                 }
             }
             
-            // 分类筛选
-            if (categoryFilter !== "all") {
-                filtered = filtered.filter(b => b.category === categoryFilter);
-            }
-            
             // 排序
-            if (sortOrder === "date-desc") {
-                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-            } else if (sortOrder === "date-asc") {
-                filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
-            } else if (sortOrder === "amount-desc") {
-                filtered.sort((a, b) => b.amount - a.amount);
-            } else if (sortOrder === "amount-asc") {
-                filtered.sort((a, b) => a.amount - b.amount);
-            }
-            
-            // 更新统计信息（排除已退款的项目）
-            const activeFiltered = filtered.filter(b => !refundedItems.has(b.originalIndex));
-            const total = activeFiltered.reduce((sum, b) => sum + b.amount, 0);
-            const avg = activeFiltered.length > 0 ? total / activeFiltered.length : 0;
-            document.getElementById("statsText").innerHTML = 
-                `📊 筛选结果: ${activeFiltered.length} 条记录 | 总金额: ¥${total.toFixed(2)} | 平均: ¥${avg.toFixed(2)}`;
-            
-            // 分组显示
-            if (groupBy === "none") {
-                renderBillItems(filtered);
+            const sortOrder = document.getElementById("sortOrder");
+            if (sortOrder) {
+                if (sortOrder.value === "date-desc") {
+                    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+                } else if (sortOrder.value === "date-asc") {
+                    filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+                } else if (sortOrder.value === "amount-desc") {
+                    filtered.sort((a, b) => b.amount - a.amount);
+                } else if (sortOrder.value === "amount-asc") {
+                    filtered.sort((a, b) => a.amount - b.amount);
+                }
             } else {
-                renderGroupedBills(filtered, groupBy);
+                // 默认按日期降序排序
+                filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
             }
+            
+            // 渲染账单列表
+            renderBillItems(filtered);
         }
         
         function renderGroupedBills(bills, groupBy) {
@@ -1421,26 +1720,63 @@
         }
         
         function renderBillItems(bills) {
-            const html = bills.map(bill => {
-                const date = new Date(bill.date);
-                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                const isRefunded = refundedItems.has(bill.originalIndex);
+            const activeFiltered = bills.filter(b => !refundedItems.has(b.originalIndex));
+            
+            if (activeFiltered.length === 0) {
+                document.getElementById("billItems").innerHTML = 
+                    `<div style="text-align: center; padding: 40px; color: #a0aec0;">
+                        <p>暂无账单数据</p>
+                    </div>`;
+                return;
+            }
+            
+            // 按日期分组
+            const grouped = {};
+            activeFiltered.forEach(bill => {
+                if (!grouped[bill.date]) {
+                    grouped[bill.date] = [];
+                }
+                grouped[bill.date].push(bill);
+            });
+            
+            // 渲染分组后的账单
+            const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+            const html = sortedDates.map(date => {
+                const bills = grouped[date];
+                const dateTotal = bills.reduce((sum, b) => sum + b.amount, 0);
+                const dateKey = date.replace(/-/g, '');
+                
                 return `
-                    <div class="bill-item ${isRefunded ? 'refunded' : ''}" data-index="${bill.originalIndex}">
-                        <div class="bill-info">
-                            <h3>${bill.merchant}</h3>
-                            <p>${dateStr} · ${bill.category}</p>
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; cursor: pointer;" onclick="toggleGroup('${dateKey}')">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span id="arrow-${dateKey}" style="font-size: 12px; transition: transform 0.3s;">▼</span>
+                                <span style="font-weight: bold; color: #667eea;">${date}</span>
+                                <span style="font-size: 12px; color: #a0aec0;">${bills.length}笔</span>
+                            </div>
+                            <div style="font-weight: bold; color: #667eea;">¥${dateTotal.toFixed(2)}</div>
                         </div>
-                        <div style="display: flex; align-items: center;">
-                            <div class="bill-amount">¥${bill.amount.toFixed(2)}</div>
-                            <button class="refund-btn ${isRefunded ? 'refunded' : ''}" onclick="toggleRefund(${bill.originalIndex})">
-                                ${isRefunded ? '✓ 已退款' : '标记退款'}
-                            </button>
+                        <div id="group-${dateKey}" style="display: block;">
+                            ${bills.map(bill => {
+                                const isRefunded = refundedItems.has(bill.originalIndex);
+                                return `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02);">
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: bold; margin-bottom: 5px;">${bill.merchant}</div>
+                                            <div style="font-size: 12px; color: #a0aec0;">${bill.category}</div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div style="font-weight: bold; color: ${isRefunded ? '#a0aec0' : '#ef4444'};">${isRefunded ? '已退款' : '-¥' + bill.amount.toFixed(2)}</div>
+                                            <div style="font-size: 12px; color: #a0aec0;">${bill.time || ''}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 `;
-            }).join("");
-
+            }).join('');
+            
             document.getElementById("billItems").innerHTML = html;
         }
 
