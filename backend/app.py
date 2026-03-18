@@ -314,8 +314,8 @@ def fetch_bills_from_pop3(user_email, auth_code, pop3_server):
             print(f"获取邮件数量失败: {e}")
             num_messages = 0
         
-        # 获取最近的邮件（最多50封）
-        recent_count = min(num_messages, 50)
+        # 获取最近的邮件（最多200封）
+        recent_count = min(num_messages, 200)
         print(f"正在获取最近的 {recent_count} 封邮件...")
         
         for i in range(num_messages - recent_count + 1, num_messages + 1):
@@ -493,8 +493,8 @@ def fetch_bills_from_imap(user_email, auth_code, imap_server):
                     email_ids = messages[0].split()
                     print(f"找到 {len(email_ids)} 封邮件")
                     
-                    # 获取最近的邮件
-                    for email_id in email_ids[-20:]:
+                    # 获取最近的邮件（最多100封）
+                    for email_id in email_ids[-100:]:
                         try:
                             status, msg_data = mail.fetch(email_id, "(RFC822)")
                             if status == "OK":
