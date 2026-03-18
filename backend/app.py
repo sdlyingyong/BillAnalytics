@@ -357,6 +357,24 @@ def fetch_bills_from_pop3(user_email, auth_code, pop3_server):
         
         mail.quit()
         
+        # 去重：基于日期、商家和金额的组合
+        if bills:
+            print(f"去重前共有 {len(bills)} 条账单记录")
+            unique_bills = []
+            seen = set()
+            
+            for bill in bills:
+                # 创建唯一键：日期 + 商家 + 金额
+                key = f"{bill['date']}_{bill['merchant']}_{bill['amount']}"
+                if key not in seen:
+                    seen.add(key)
+                    unique_bills.append(bill)
+                else:
+                    print(f"  ⚠️ 发现重复账单: {bill['date']} | {bill['merchant']} | ¥{bill['amount']}")
+            
+            bills = unique_bills
+            print(f"去重后共有 {len(bills)} 条唯一账单记录")
+        
         if not bills:
             print("未找到账单数据，返回空列表")
         
@@ -520,6 +538,24 @@ def fetch_bills_from_imap(user_email, auth_code, imap_server):
             mail.logout()
         except:
             pass
+        
+        # 去重：基于日期、商家和金额的组合
+        if bills:
+            print(f"去重前共有 {len(bills)} 条账单记录")
+            unique_bills = []
+            seen = set()
+            
+            for bill in bills:
+                # 创建唯一键：日期 + 商家 + 金额
+                key = f"{bill['date']}_{bill['merchant']}_{bill['amount']}"
+                if key not in seen:
+                    seen.add(key)
+                    unique_bills.append(bill)
+                else:
+                    print(f"  ⚠️ 发现重复账单: {bill['date']} | {bill['merchant']} | ¥{bill['amount']}")
+            
+            bills = unique_bills
+            print(f"去重后共有 {len(bills)} 条唯一账单记录")
         
         if not bills:
             print("未找到账单数据，返回空列表")
