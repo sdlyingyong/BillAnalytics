@@ -7,13 +7,14 @@ import email
 import re
 import time
 import io
+import os
 from datetime import datetime, timedelta
 from email.header import decode_header
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import PyPDF2
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
 
 def decode_email_header(header):
