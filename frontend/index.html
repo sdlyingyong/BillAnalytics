@@ -763,8 +763,10 @@
             renderCharts();
             updateRefundCount();
             
-            // 恢复滚动位置
-            window.scrollTo(scrollLeft, scrollTop);
+            // 延迟恢复滚动位置，确保DOM更新完成
+            setTimeout(() => {
+                window.scrollTo(scrollLeft, scrollTop);
+            }, 50);
         }
 
         function clearAllRefunds() {
@@ -782,8 +784,10 @@
                 renderCharts();
                 updateRefundCount();
                 
-                // 恢复滚动位置
-                window.scrollTo(scrollLeft, scrollTop);
+                // 延迟恢复滚动位置，确保DOM更新完成
+                setTimeout(() => {
+                    window.scrollTo(scrollLeft, scrollTop);
+                }, 50);
             }
         }
 
